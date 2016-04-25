@@ -6,7 +6,7 @@
 #include "uboss_module.h"
 #include "uboss_timer.h"
 #include "uboss_monitor.h"
-#include "uboss_socket.h"
+//#include "uboss_socket.h"
 #include "uboss_daemon.h"
 #include "uboss_harbor.h"
 
@@ -50,6 +50,7 @@ wakeup(struct monitor *m, int busy) {
 	}
 }
 
+/*
 static void *
 thread_socket(void *p) {
 	struct monitor * m = p;
@@ -66,6 +67,7 @@ thread_socket(void *p) {
 	}
 	return NULL;
 }
+*/
 
 static void
 free_monitor(struct monitor *m) {
@@ -111,7 +113,7 @@ thread_timer(void *p) {
 		usleep(2500);
 	}
 	// wakeup socket thread
-	uboss_socket_exit();
+//	uboss_socket_exit();
 	// wakeup all worker thread
 	pthread_mutex_lock(&m->mutex);
 	m->quit = 1;
@@ -151,7 +153,7 @@ thread_worker(void *p) {
 
 static void
 start(int thread) {
-	pthread_t pid[thread+3];
+	pthread_t pid[thread+2]; // 3改2,屏蔽 socket 线程
 
 	struct monitor *m = uboss_malloc(sizeof(*m));
 	memset(m, 0, sizeof(*m));
@@ -174,7 +176,7 @@ start(int thread) {
 
 	create_thread(&pid[0], thread_monitor, m);
 	create_thread(&pid[1], thread_timer, m);
-	create_thread(&pid[2], thread_socket, m);
+//	create_thread(&pid[2], thread_socket, m);
 
 	static int weight[] = { 
 		-1, -1, -1, -1, 0, 0, 0, 0,
@@ -193,7 +195,7 @@ start(int thread) {
 		create_thread(&pid[i+3], thread_worker, &wp[i]);
 	}
 
-	for (i=0;i<thread+3;i++) {
+	for (i=0;i<thread+2;i++) {
 		pthread_join(pid[i], NULL); 
 	}
 
@@ -226,7 +228,7 @@ uboss_start(struct uboss_config * config) {
 	uboss_mq_init();
 	uboss_module_init(config->module_path);
 	uboss_timer_init();
-	uboss_socket_init();
+//	uboss_socket_init();
 
 	struct uboss_context *ctx = uboss_context_new(config->logservice, config->logger);
 	if (ctx == NULL) {
@@ -240,7 +242,7 @@ uboss_start(struct uboss_config * config) {
 
 	// harbor_exit may call socket send, so it should exit before socket_free
 	uboss_harbor_exit();
-	uboss_socket_free();
+//	uboss_socket_free();
 	if (config->daemon) {
 		daemon_exit(config->daemon);
 	}
