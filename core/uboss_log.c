@@ -1,7 +1,7 @@
 #include "uboss_log.h"
 #include "uboss_timer.h"
 #include "uboss.h"
-#include "uboss_socket.h"
+//#include "uboss_socket.h"
 #include <string.h>
 #include <time.h>
 
@@ -43,6 +43,7 @@ log_blob(FILE *f, void * buffer, size_t sz) {
 	}
 }
 
+/*
 static void
 log_socket(FILE * f, struct uboss_socket_message * message, size_t sz) {
 	fprintf(f, "[socket] %d %d %d ", message->type, message->id, message->ud);
@@ -62,11 +63,12 @@ log_socket(FILE * f, struct uboss_socket_message * message, size_t sz) {
 	fprintf(f, "\n");
 	fflush(f);
 }
+*/
 
 void 
 uboss_log_output(FILE *f, uint32_t source, int type, int session, void * buffer, size_t sz) {
 	if (type == PTYPE_SOCKET) {
-		log_socket(f, buffer, sz);
+//		log_socket(f, buffer, sz);
 	} else {
 		uint32_t ti = (uint32_t)uboss_now();
 		fprintf(f, ":%08x %d %d %u ", source, type, session, ti);
