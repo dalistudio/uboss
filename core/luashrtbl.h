@@ -4,6 +4,7 @@
 #include "lstring.h"
 
 // If you use modified lua, this macro would be defined in lstring.h
+// 如果你使用修改的 lua， 则 宏定义在 lua 源代码的 lstring.h 中
 #ifndef ENABLE_SHORT_STRING_TABLE
 
 static inline int luaS_shrinfo(lua_State *L) { return 0; }

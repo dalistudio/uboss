@@ -11,6 +11,7 @@
 static struct uboss_context * REMOTE = 0;
 static unsigned int HARBOR = ~0;
 
+// 发送消息到集群
 void 
 uboss_harbor_send(struct remote_message *rmsg, uint32_t source, int session) {
 	int type = rmsg->sz >> MESSAGE_TYPE_SHIFT;
@@ -19,6 +20,7 @@ uboss_harbor_send(struct remote_message *rmsg, uint32_t source, int session) {
 	uboss_context_send(REMOTE, rmsg, sizeof(*rmsg) , source, type , session);
 }
 
+// 判断是否为远程消息
 int 
 uboss_harbor_message_isremote(uint32_t handle) {
 	assert(HARBOR != ~0);
@@ -26,19 +28,22 @@ uboss_harbor_message_isremote(uint32_t handle) {
 	return h != HARBOR && h !=0;
 }
 
+// 初始化集群
 void
 uboss_harbor_init(int harbor) {
-	HARBOR = (unsigned int)harbor << HANDLE_REMOTE_SHIFT;
+	HARBOR = (unsigned int)harbor << HANDLE_REMOTE_SHIFT; // 将集群的值 移位 到高位
 }
 
+// 启动集群
 void
 uboss_harbor_start(void *ctx) {
 	// the HARBOR must be reserved to ensure the pointer is valid.
 	// It will be released at last by calling uboss_harbor_exit
-	uboss_context_reserve(ctx);
+	uboss_context_reserve(ctx); // 保留
 	REMOTE = ctx;
 }
 
+// 退出集群
 void
 uboss_harbor_exit() {
 	struct uboss_context * ctx = REMOTE;

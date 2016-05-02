@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Main Function
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #include "uboss.h"
 
 #include "uboss_imp.h"
@@ -14,6 +24,7 @@
 #include <signal.h>
 #include <assert.h>
 
+// 设置 整数类型 的 K-V 到 lua 环境中
 static int
 optint(const char *key, int opt) {
 	const char * str = uboss_getenv(key);
@@ -27,6 +38,7 @@ optint(const char *key, int opt) {
 }
 
 /*
+// 设置 布尔类型 的 K-V 到 lua 环境中 
 static int
 optboolean(const char *key, int opt) {
 	const char * str = uboss_getenv(key);
@@ -38,6 +50,7 @@ optboolean(const char *key, int opt) {
 }
 */
 
+// 设置 字符串类型 的 K-V 到 lua 环境中
 static const char *
 optstring(const char *key,const char * opt) {
 	const char * str = uboss_getenv(key);
@@ -51,6 +64,7 @@ optstring(const char *key,const char * opt) {
 	return str;
 }
 
+// 初始化环境
 static void
 _init_env(lua_State *L) {
 	lua_pushnil(L);  /* first key */
@@ -77,6 +91,7 @@ _init_env(lua_State *L) {
 	lua_pop(L,1);
 }
 
+// 信号处理，屏蔽 SIGPIPE 信号，避免进程退出
 int sigign() {
 	struct sigaction sa;
 	sa.sa_handler = SIG_IGN;
@@ -84,6 +99,7 @@ int sigign() {
 	return 0;
 }
 
+// 加载 lua 脚本
 static const char * load_config = "\
 	local config_name = ...\
 	local f = assert(io.open(config_name))\
@@ -96,9 +112,12 @@ static const char * load_config = "\
 	return result\
 ";
 
+// 主函数
 int
 main(int argc, char *argv[]) {
 	const char * config_file = NULL ;
+
+	// 执行必须有一个参数，否则打印错误信息。
 	if (argc > 1) {
 		config_file = argv[1];
 	} else {
@@ -106,42 +125,43 @@ main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	luaS_initshr();
-	uboss_globalinit();
-	uboss_env_init();
+	luaS_initshr(); // 初始化 Lua 全局共享表
+	uboss_globalinit(); // 全局初始化
+	uboss_env_init(); // LUA环境初始化
 
-	sigign();
+	sigign(); // 信号处理
 
+	// 声明 配置文件 的结构
 	struct uboss_config config;
 
-	struct lua_State *L = lua_newstate(uboss_lalloc, NULL);
-	luaL_openlibs(L);	// link lua lib
+	struct lua_State *L = lua_newstate(uboss_lalloc, NULL); // 实例化一个 Lua VM 用于处理 配置文件
+	luaL_openlibs(L);	// link lua lib 使用 Lua 标准库
 
-	int err = luaL_loadstring(L, load_config);
+	int err = luaL_loadstring(L, load_config); // 加载lua脚本字符串，即上面定义的 load_config 字符串
 	assert(err == LUA_OK);
-	lua_pushstring(L, config_file);
+	lua_pushstring(L, config_file); // 将配置文件的名称压入栈
 
-	err = lua_pcall(L, 1, 1, 0);
+	err = lua_pcall(L, 1, 1, 0); // 以 config_file 为参数，调用 load_config 函数。
 	if (err) {
 		fprintf(stderr,"%s\n",lua_tostring(L,-1));
-		lua_close(L);
+		lua_close(L); // 关闭 lua
 		return 1;
 	}
-	_init_env(L);
+	_init_env(L); // 初始化 lua 环境
 
-	config.thread =  optint("thread",8);
-	config.module_path = optstring("cpath","./cservice/?.so");
-	config.harbor = optint("harbor", 1);
-	config.bootstrap = optstring("bootstrap","lua bootstrap");
-	config.daemon = optstring("daemon", NULL);
-	config.logger = optstring("logger", NULL);
-	config.logservice = optstring("logservice", "logger");
+	config.thread =  optint("thread",8); // 启动工作线程数
+	config.module_path = optstring("cpath","./cservice/?.so"); // C写的模块路径
+	config.harbor = optint("harbor", 1); // 集群的编号
+	config.bootstrap = optstring("bootstrap","lua bootstrap"); // 启动脚本
+	config.daemon = optstring("daemon", NULL); // 守护进程 pid 路径
+	config.logger = optstring("logger", NULL); // 日志记录器
+	config.logservice = optstring("logservice", "logger"); // 日志记录器的服务
 
-	lua_close(L);
+	lua_close(L); // 关闭 lua
 
-	uboss_start(&config);
-	uboss_globalexit();
-	luaS_exitshr();
+	uboss_start(&config); // 启动 uBoss 框架
+	uboss_globalexit(); // 退出全局初始化
+	luaS_exitshr(); // 退出 Lua 全局共享表
 
 	return 0;
 }
