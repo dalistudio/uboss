@@ -15,6 +15,6 @@ all : \
 	logger.so
 
 
-logger.so : service_logger.c
+logger.so : module_logger.c
 	gcc $(CFLAGS) $(SHARED) -I../../core $^ -o $@
 

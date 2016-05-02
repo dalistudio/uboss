@@ -15,7 +15,7 @@ all : \
 	lua.so
 
 
-lua.so : service_lua.c
+lua.so : module_lua.c
 	gcc $(CFLAGS) $(LDFLAGS) $(SHARED) -I../../core -I../../3rd/lua-5.3.2/src $^ -o $@ ../../3rd/lua-5.3.2/src/liblua.a ./lib/uboss.so
 
 
