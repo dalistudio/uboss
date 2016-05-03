@@ -1,3 +1,8 @@
+/*
+ * 守护模块
+ *
+ * 
+*/
 #ifndef UBOSS_DAEMON_H
 #define UBOSS_DAEMON_H
 

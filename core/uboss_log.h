@@ -1,3 +1,8 @@
+/*
+ * 日志模块
+ *
+ * 如果开启，可记录日志到文件或网络中
+*/
 #ifndef uboss_log_h
 #define uboss_log_h
 

@@ -8,12 +8,13 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// 环境变量
+// 环境结构
 struct uboss_env {
-	struct spinlock lock;
+	struct spinlock lock; // 锁
 	lua_State *L; // Lua VM
 };
 
+// 声明环境结构的全局变量
 static struct uboss_env *E = NULL;
 
 // 获取环境变量
@@ -50,7 +51,7 @@ uboss_setenv(const char *key, const char *value) {
 // 初始化环境变量
 void
 uboss_env_init() {
-	E = uboss_malloc(sizeof(*E));
+	E = uboss_malloc(sizeof(*E)); // 分配内存空间
 	SPIN_INIT(E) // 初始化锁
 	E->L = luaL_newstate(); // 创建新的 Lua VM
 }

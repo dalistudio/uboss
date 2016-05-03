@@ -1,3 +1,8 @@
+/*
+ * 监视器
+ *
+ * 用于监视工作线程是否已死，并关闭服务
+*/
 #ifndef UBOSS_MONITOR_H
 #define UBOSS_MONITOR_H
 

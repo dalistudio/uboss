@@ -1,3 +1,8 @@
+/*
+ * 集群模块
+ *
+ * 主要判断发送的消息是否为远程，以及发送远程消息
+*/
 #ifndef UBOSS_HARBOR_H
 #define UBOSS_HARBOR_H
 

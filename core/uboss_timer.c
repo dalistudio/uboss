@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #endif
 
+// 定时器回调函数
 typedef void (*timer_execute_func)(void *ud,void *arg);
 
 #define TIME_NEAR_SHIFT 8
@@ -25,53 +26,61 @@ typedef void (*timer_execute_func)(void *ud,void *arg);
 #define TIME_NEAR_MASK (TIME_NEAR-1)
 #define TIME_LEVEL_MASK (TIME_LEVEL-1)
 
+// 定时器事件
 struct timer_event {
-	uint32_t handle;
-	int session;
+	uint32_t handle; // 句柄
+	int session; // 会话
 };
 
+// 定时器节点
 struct timer_node {
-	struct timer_node *next;
-	uint32_t expire;
+	struct timer_node *next; // 下一个定时器的节点
+	uint32_t expire; // 期限
 };
 
+// 链表
 struct link_list {
-	struct timer_node head;
-	struct timer_node *tail;
+	struct timer_node head; // 链表头
+	struct timer_node *tail; // 链表尾
 };
 
+// 定时器
 struct timer {
 	struct link_list near[TIME_NEAR];
 	struct link_list t[4][TIME_LEVEL];
-	struct spinlock lock;
-	uint32_t time;
-	uint32_t starttime;
-	uint64_t current;
-	uint64_t current_point;
+	struct spinlock lock; // 锁
+	uint32_t time; // 时间
+	uint32_t starttime; // 开始时间
+	uint64_t current; // 当前
+	uint64_t current_point; // 当前点
 };
 
+// 定时器结构
 static struct timer * TI = NULL;
 
+// 清理链表
 static inline struct timer_node *
 link_clear(struct link_list *list) {
 	struct timer_node * ret = list->head.next;
-	list->head.next = 0;
-	list->tail = &(list->head);
+	list->head.next = 0; // 设置下一个节点为空，即没有下个节点
+	list->tail = &(list->head); // 将链表尾 = 链表头
 
 	return ret;
 }
 
+// 链表
 static inline void
 link(struct link_list *list,struct timer_node *node) {
-	list->tail->next = node;
-	list->tail = node;
-	node->next=0;
+	list->tail->next = node; // 设置下一个节点的地址
+	list->tail = node; // 链表尾 = 本节点
+	node->next=0; // 下一个节点的下一个节点为哦嗯
 }
 
+// 添加节点
 static void
 add_node(struct timer *T,struct timer_node *node) {
-	uint32_t time=node->expire;
-	uint32_t current_time=T->time;
+	uint32_t time=node->expire; // 获得时间期限
+	uint32_t current_time=T->time; // 设置当前时间
 	
 	if ((time|TIME_NEAR_MASK)==(current_time|TIME_NEAR_MASK)) {
 		link(&T->near[time&TIME_NEAR_MASK],node);
@@ -89,19 +98,21 @@ add_node(struct timer *T,struct timer_node *node) {
 	}
 }
 
+// 添加定时器
 static void
 timer_add(struct timer *T,void *arg,size_t sz,int time) {
-	struct timer_node *node = (struct timer_node *)uboss_malloc(sizeof(*node)+sz);
-	memcpy(node+1,arg,sz);
+	struct timer_node *node = (struct timer_node *)uboss_malloc(sizeof(*node)+sz); // 分配内存空间
+	memcpy(node+1,arg,sz); // 复制参数
 
-	SPIN_LOCK(T);
+	SPIN_LOCK(T); // 锁
 
-		node->expire=time+T->time;
-		add_node(T,node);
+		node->expire=time+T->time; // 
+		add_node(T,node); // 添加节点
 
-	SPIN_UNLOCK(T);
+	SPIN_UNLOCK(T); // 解锁
 }
 
+// 移动列表
 static void
 move_list(struct timer *T, int level, int idx) {
 	struct timer_node *current = link_clear(&T->t[level][idx]);
@@ -138,21 +149,23 @@ timer_shift(struct timer *T) {
 static inline void
 dispatch_list(struct timer_node *current) {
 	do {
-		struct timer_event * event = (struct timer_event *)(current+1);
+		struct timer_event * event = (struct timer_event *)(current+1); // 定时器事件
 		struct uboss_message message;
-		message.source = 0;
-		message.session = event->session;
-		message.data = NULL;
-		message.sz = (size_t)PTYPE_RESPONSE << MESSAGE_TYPE_SHIFT;
+		message.source = 0; // 消息来源地址为自己
+		message.session = event->session; // 事件的会话
+		message.data = NULL; // 消息的数据
+		message.sz = (size_t)PTYPE_RESPONSE << MESSAGE_TYPE_SHIFT; // 消息的数据长度
 
+		// 将消息压入队列
 		uboss_context_push(event->handle, &message);
 		
-		struct timer_node * temp = current;
+		struct timer_node * temp = current; // 节点
 		current=current->next;
-		uboss_free(temp);	
+		uboss_free(temp);
 	} while (current);
 }
 
+// 执行定时器
 static inline void
 timer_execute(struct timer *T) {
 	int idx = T->time & TIME_NEAR_MASK;
@@ -166,6 +179,7 @@ timer_execute(struct timer *T) {
 	}
 }
 
+// 更新定时器
 static void 
 timer_update(struct timer *T) {
 	SPIN_LOCK(T);
@@ -181,10 +195,11 @@ timer_update(struct timer *T) {
 	SPIN_UNLOCK(T);
 }
 
+// 创建定时器
 static struct timer *
 timer_create_timer() {
-	struct timer *r=(struct timer *)uboss_malloc(sizeof(struct timer));
-	memset(r,0,sizeof(*r));
+	struct timer *r=(struct timer *)uboss_malloc(sizeof(struct timer)); // 分配内存空间
+	memset(r,0,sizeof(*r)); // 清空内存空间
 
 	int i,j;
 
@@ -205,36 +220,39 @@ timer_create_timer() {
 	return r;
 }
 
+// 超时
 int
 uboss_timeout(uint32_t handle, int time, int session) {
 	if (time <= 0) {
 		struct uboss_message message;
-		message.source = 0;
-		message.session = session;
-		message.data = NULL;
-		message.sz = (size_t)PTYPE_RESPONSE << MESSAGE_TYPE_SHIFT;
+		message.source = 0; // 消息来源
+		message.session = session; // 消息会话
+		message.data = NULL; // 消息数据地址
+		message.sz = (size_t)PTYPE_RESPONSE << MESSAGE_TYPE_SHIFT; // 消息的长度
 
+		// 将消息压入
 		if (uboss_context_push(handle, &message)) {
 			return -1;
 		}
 	} else {
-		struct timer_event event;
-		event.handle = handle;
-		event.session = session;
-		timer_add(TI, &event, sizeof(event), time);
+		struct timer_event event; // 定时器事件
+		event.handle = handle; // 句柄
+		event.session = session; // 会话
+		timer_add(TI, &event, sizeof(event), time); // 加入定时器
 	}
 
-	return session;
+	return session; // 返回会话
 }
 
 // centisecond: 1/100 second
+// 百分之一秒
 static void
 systime(uint32_t *sec, uint32_t *cs) {
 #if !defined(__APPLE__)
 	struct timespec ti;
-	clock_gettime(CLOCK_REALTIME, &ti);
-	*sec = (uint32_t)ti.tv_sec;
-	*cs = (uint32_t)(ti.tv_nsec / 10000000);
+	clock_gettime(CLOCK_REALTIME, &ti); // 获得系统实时的时间
+	*sec = (uint32_t)ti.tv_sec; // 秒钟
+	*cs = (uint32_t)(ti.tv_nsec / 10000000); // 纳秒 转1/00秒
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -248,25 +266,26 @@ gettime() {
 	uint64_t t;
 #if !defined(__APPLE__)
 	struct timespec ti;
-	clock_gettime(CLOCK_MONOTONIC, &ti);
-	t = (uint64_t)ti.tv_sec * 100;
-	t += ti.tv_nsec / 10000000;
+	clock_gettime(CLOCK_MONOTONIC, &ti); // 从系统启动开始的时间
+	t = (uint64_t)ti.tv_sec * 100; // 秒 * 100 倍
+	t += ti.tv_nsec / 10000000; // 纳秒 转1/100秒
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	t = (uint64_t)tv.tv_sec * 100;
 	t += tv.tv_usec / 10000;
 #endif
-	return t;
+	return t; // 返回 100倍秒+百分之一秒
 }
 
+// 更新时间
 void
 uboss_updatetime(void) {
-	uint64_t cp = gettime();
-	if(cp < TI->current_point) {
+	uint64_t cp = gettime(); // 获得系统启动的时间点
+	if(cp < TI->current_point) { // 如果 现在时间点 小于 之前的时间点，则错误
 		uboss_error(NULL, "time diff error: change from %lld to %lld", cp, TI->current_point);
-		TI->current_point = cp;
-	} else if (cp != TI->current_point) {
+		TI->current_point = cp; // 将 现在时间点 替换 之前的时间点 的值
+	} else if (cp != TI->current_point) { // 如果 现在时间点 不等于 之前的时间点
 		uint32_t diff = (uint32_t)(cp - TI->current_point);
 		TI->current_point = cp;
 		TI->current += diff;
@@ -277,22 +296,25 @@ uboss_updatetime(void) {
 	}
 }
 
+// 返回开始时间
 uint32_t
 uboss_starttime(void) {
 	return TI->starttime;
 }
 
+// 返回当前时间
 uint64_t 
 uboss_now(void) {
 	return TI->current;
 }
 
+// 初始化定时器
 void 
 uboss_timer_init(void) {
-	TI = timer_create_timer();
+	TI = timer_create_timer(); // 创建定时器
 	uint32_t current = 0;
-	systime(&TI->starttime, &current);
-	TI->current = current;
-	TI->current_point = gettime();
+	systime(&TI->starttime, &current); // 获得系统的实时时间，starttime为秒钟，current为百分之一秒
+	TI->current = current; // 设置当前时间 1/100秒
+	TI->current_point = gettime(); // 获得系统启动的时间点
 }
 
