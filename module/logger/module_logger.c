@@ -41,7 +41,7 @@ _logger(struct uboss_context * context, void *ud, int type, int session, uint32_
 	return 0;
 }
 
-日志初始化
+// 日志初始化
 int
 logger_init(struct logger * inst, struct uboss_context *ctx, const char * parm) {
 	// 如果 parm 参数存在

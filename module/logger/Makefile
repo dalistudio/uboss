@@ -16,5 +16,5 @@ all : \
 
 
 logger.so : module_logger.c
-	gcc $(CFLAGS) $(SHARED) -I../../core $^ -o $@
+	gcc $(CFLAGS) $(SHARED) -I../../core $^ -o $@ ../../core/libuboss.a
 

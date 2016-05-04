@@ -7,30 +7,23 @@
 PLAT= none
 
 CC= gcc -std=gnu99
-MINGW_CC= i686-w64-mingw32-gcc
-CFLAGS= -O2 -fPIC -Wall -DNOUSE_JEMALLOC $(SYSCFLAGS) $(MYCFLAGS)
+CFLAGS= -O2 -fPIC -Wall -Wl,-E -DNOUSE_JEMALLOC $(SYSCFLAGS) $(MYCFLAGS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
-LIBS= -lpthread -lm $(SYSLIBS) $(MYLIBS)
-
-AR= ar rcu
-RANLIB= ranlib
-RM= rm -f
+LIBS= ../3rd/lua-5.3.2/src/liblua.a -lpthread -ldl -lm $(SYSLIBS) $(MYLIBS)
 
 SYSCFLAGS=
 SYSLDFLAGS=
 SYSLIBS=
 
-MYCFLAGS=  -I../3rd/lua-5.3.2/src ../3rd/lua-5.3.2/src/liblua.so
+MYCFLAGS=  -I../3rd/lua-5.3.2/src
 MYLDFLAGS= 
 MYLIBS=
 MYOBJS=
 
 # == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
 
-PLATS= linux macosx mingw freebsd
+PLATS= linux macosx freebsd
 
-UBOSS_SO= libuboss.so
-UBOSS_A=  libuboss.a
 CORE_O=	malloc_hook.o uboss_start.o uboss_handle.o uboss_server.o \
 	uboss_module.o uboss_mq.o uboss_monitor.o uboss_harbor.o \
 	uboss_error.o uboss_log.o uboss_timer.o uboss_daemon.o uboss_env.o
@@ -41,8 +34,7 @@ UBOSS_T= uboss
 UBOSS_O= uboss.o
 
 ALL_O= $(BASE_O) $(UBOSS_O)
-ALL_T= $(UBOSS_A) $(UBOSS_SO) $(UBOSS_T)
-ALL_A= $(UBOSS_A)
+ALL_T= $(UBOSS_T)
 
 # Targets start here.
 default: $(PLAT)
@@ -51,17 +43,8 @@ all:	$(ALL_T)
 
 o:	$(ALL_O)
 
-a:	$(ALL_A)
-
-$(UBOSS_A): $(BASE_O)
-	$(AR) $@ $(BASE_O)
-	$(RANLIB) $@
-
-$(UBOSS_T): $(UBOSS_O) $(UBOSS_A)
-	$(CC) -o $@ $(LDFLAGS) $(UBOSS_O) $(UBOSS_A) ./libuboss.so -lpthread -ldl ./liblua.so
-
-$(UBOSS_SO): $(CORE_O)
-	$(CC) -o $@ -shared $? -ldl -lm
+$(UBOSS_T): $(UBOSS_O) $(BASE_O)
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $(UBOSS_O) $(BASE_O) $(LIBS)
 
 clean:
 	$(RM) $(ALL_T) $(ALL_O)
@@ -69,13 +52,9 @@ clean:
 echo:
 	@echo "PLAT= $(PLAT)"
 	@echo "CC= $(CC)"
-	@echo "MINGW_CC= $(MINGW_CC)"
 	@echo "CFLAGS= $(CFLAGS)"
 	@echo "LDFLAGS= $(SYSLDFLAGS)"
 	@echo "LIBS= $(LIBS)"
-	@echo "AR= $(AR)"
-	@echo "RANLIB= $(RANLIB)"
-	@echo "RM= $(RM)"
 
 # Convenience targets for popular platforms
 ALL= all
@@ -89,10 +68,6 @@ linux:
 
 macosx:
 	$(MAKE) $(ALL) CC=cc
-
-mingw:
-	$(MAKE) "UBOSS_A=libuboss.dll" "UBOSS_T=uboss.exe" \
-	"AR=$(MINGW_CC) -shared -o" "SYSLDFLAGS=-s" uboss.exe
 
 freebsd:
 	$(MAKE) $(ALL) SYSLIBS="-Wl,-E"
