@@ -149,13 +149,17 @@ main(int argc, char *argv[]) {
 	}
 	_init_env(L); // 初始化 lua 环境
 
+	config.root = optstring("root","./"); // 根目录
 	config.thread =  optint("thread",8); // 启动工作线程数
-	config.module_path = optstring("cpath","./cservice/?.so"); // C写的模块路径
+	config.module_path = optstring("cpath","./lib/uboss/?.so"); // C写的模块路径
 	config.harbor = optint("harbor", 1); // 集群的编号
 	config.bootstrap = optstring("bootstrap","lua bootstrap"); // 启动脚本
 	config.daemon = optstring("daemon", NULL); // 守护进程 pid 路径
-	config.logger = optstring("logger", NULL); // 日志记录器
+
 	config.logservice = optstring("logservice", "logger"); // 日志记录器的服务
+	config.logger = optstring("logger", "uboss.log"); // 日志记录器
+	config.logpath = optstring("logpath", "./log/"); // 保存日志的路径
+	
 
 	lua_close(L); // 关闭 lua
 

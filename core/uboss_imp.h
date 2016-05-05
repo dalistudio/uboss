@@ -3,13 +3,15 @@
 
 // 配置文件的结构
 struct uboss_config {
+	const char * root; // 根目录
 	int thread; // 线程数
 	int harbor; // 集群Id
 	const char * daemon; // 守护
 	const char * module_path; // 模块的路径
 	const char * bootstrap; // 引导程序
-	const char * logger; // 日志记录器
 	const char * logservice; // 日志记录器的服务
+	const char * logger; // 日志记录器
+	const char * logpath; // 保存日志的路径
 };
 
 #define THREAD_WORKER 0
