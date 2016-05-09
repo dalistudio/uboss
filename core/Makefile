@@ -24,7 +24,7 @@ MYOBJS=
 
 PLATS= linux macosx freebsd
 
-CORE_O=	malloc_hook.o uboss_start.o uboss_handle.o uboss_server.o \
+CORE_O=	uboss_malloc.o uboss_start.o uboss_handle.o uboss_server.o \
 	uboss_module.o uboss_mq.o uboss_monitor.o uboss_harbor.o \
 	uboss_error.o uboss_log.o uboss_timer.o uboss_daemon.o uboss_env.o
 	
@@ -79,7 +79,7 @@ freebsd:
 # DO NOT DELETE
 
 uboss.o: uboss.c
-malloc_hook.o: malloc_hook.h malloc_hook.c
+uboss_malloc.o: uboss_malloc.h uboss_malloc.c
 uboss_env.o: uboss_env.h uboss_env.c
 uboss_start.o: uboss_start.c
 uboss_handle.o: uboss_handle.h uboss_handle.c

@@ -1,5 +1,5 @@
-#ifndef UBOSS_RWLOCK_H
-#define UBOSS_RWLOCK_H
+#ifndef UBOSS_LOCK_H
+#define UBOSS_LOCK_H
 
 #define SPIN_INIT(q) spinlock_init(&(q)->lock);
 #define SPIN_LOCK(q) spinlock_lock(&(q)->lock);
