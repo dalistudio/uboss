@@ -1,8 +1,8 @@
 #include "uboss.h"
 
+#include "uboss_lock.h"
 #include "uboss_handle.h"
 #include "uboss_server.h"
-#include "rwlock.h"
 
 #include <stdlib.h>
 #include <assert.h>

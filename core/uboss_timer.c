@@ -4,7 +4,7 @@
 #include "uboss_mq.h"
 #include "uboss_server.h"
 #include "uboss_handle.h"
-#include "spinlock.h"
+#include "uboss_lock.h"
 
 #include <time.h>
 #include <assert.h>
