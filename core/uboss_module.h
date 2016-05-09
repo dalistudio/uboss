@@ -3,18 +3,19 @@
 
 struct uboss_context;
 
+// 回调函数
 typedef void * (*uboss_dl_create)(void);
 typedef int (*uboss_dl_init)(void * inst, struct uboss_context *, const char * parm);
 typedef void (*uboss_dl_release)(void * inst);
 typedef void (*uboss_dl_signal)(void * inst, int signal);
 
 struct uboss_module {
-	const char * name;
-	void * module;
-	uboss_dl_create create;
-	uboss_dl_init init;
-	uboss_dl_release release;
-	uboss_dl_signal signal;
+	const char * name; // 模块名称
+	void * module; // 模块的地址
+	uboss_dl_create create; // 创建的回调函数地址
+	uboss_dl_init init; // 初始化的回调函数地址
+	uboss_dl_release release; // 释放的回调函数地址
+	uboss_dl_signal signal; // 信号的回调函数地址
 };
 
 void uboss_module_insert(struct uboss_module *mod);

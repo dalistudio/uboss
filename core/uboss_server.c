@@ -52,7 +52,7 @@ struct uboss_context {
 	int session_id; // 会话 ID
 	int ref; // 调用次数
 	bool init; // 初始化
-	bool endless;
+	bool endless; // 终结标志
 
 	CHECKCALLING_DECL
 };
@@ -268,11 +268,11 @@ static void
 dispatch_message(struct uboss_context *ctx, struct uboss_message *msg) {
 	assert(ctx->init);
 	CHECKCALLING_BEGIN(ctx)
-	pthread_setspecific(G_NODE.handle_key, (void *)(uintptr_t)(ctx->handle));
-	int type = msg->sz >> MESSAGE_TYPE_SHIFT;
-	size_t sz = msg->sz & MESSAGE_TYPE_MASK;
-	if (ctx->logfile) {
-		uboss_log_output(ctx->logfile, msg->source, type, msg->session, msg->data, sz);
+	pthread_setspecific(G_NODE.handle_key, (void *)(uintptr_t)(ctx->handle)); // 设置线程通道
+	int type = msg->sz >> MESSAGE_TYPE_SHIFT; // 获得消息的类型
+	size_t sz = msg->sz & MESSAGE_TYPE_MASK; // 获得消息的长度
+	if (ctx->logfile) { // 如果uboss上下文设置类日志文件
+		uboss_log_output(ctx->logfile, msg->source, type, msg->session, msg->data, sz); // 写入日志信息
 	}
 
 	// 调用 服务模块中的返回函数
@@ -296,6 +296,7 @@ uboss_context_dispatchall(struct uboss_context * ctx) {
 // 框架分发消息
 struct message_queue * 
 uboss_context_message_dispatch(struct uboss_monitor *sm, struct message_queue *q, int weight) {
+	// 如果传入的消息队列地址为空值
 	if (q == NULL) {
 		q = uboss_globalmq_pop(); // 弹出全局消息
 		if (q==NULL)
@@ -315,27 +316,28 @@ uboss_context_message_dispatch(struct uboss_monitor *sm, struct message_queue *q
 	struct uboss_message msg;
 
 	for (i=0;i<n;i++) {
-		if (uboss_mq_pop(q,&msg)) { // 弹出消息
-			uboss_context_release(ctx);
-			return uboss_globalmq_pop();
+		if (uboss_mq_pop(q,&msg)) { // 弹出uboss消息
+			uboss_context_release(ctx); // 释放上下文
+			return uboss_globalmq_pop(); // 从全局队列中弹出消息
 		} else if (i==0 && weight >= 0) {
-			n = uboss_mq_length(q);
-			n >>= weight;
+			n = uboss_mq_length(q); // 获得队列的长度
+			n >>= weight; // 权重
 		}
-		int overload = uboss_mq_overload(q);
+		int overload = uboss_mq_overload(q); // 消息过载
 		if (overload) {
 			uboss_error(ctx, "May overload, message queue length = %d", overload);
 		}
 
-		uboss_monitor_trigger(sm, msg.source , handle); // 触发消息
+		uboss_monitor_trigger(sm, msg.source , handle); // 触发监视
 
+		// 如果上下文中的返回函数指针为空
 		if (ctx->cb == NULL) {
-			uboss_free(msg.data);
+			uboss_free(msg.data); // 释放消息的数据内存空间
 		} else {
 			dispatch_message(ctx, &msg); // 分发消息
 		}
 
-		uboss_monitor_trigger(sm, 0,0);
+		uboss_monitor_trigger(sm, 0,0); // 触发监视
 	}
 
 	assert(q == ctx->queue);

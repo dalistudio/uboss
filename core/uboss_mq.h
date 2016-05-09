@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+// uboss 消息
 struct uboss_message {
-	uint32_t source;
-	int session;
-	void * data;
-	size_t sz;
+	uint32_t source; // 来源
+	int session; // 会话
+	void * data; // 数据的地址
+	size_t sz; // 数据的长度
 };
 
 // type is encoding in uboss_message.sz high 8bit

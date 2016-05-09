@@ -149,6 +149,7 @@ uboss_mq_pop(struct message_queue *q, struct uboss_message *message) {
 	int ret = 1;
 	SPIN_LOCK(q)
 
+	// 如果队列头不等于队列尾
 	if (q->head != q->tail) {
 		*message = q->queue[q->head++];
 		ret = 0;
@@ -222,10 +223,10 @@ uboss_mq_push(struct message_queue *q, struct uboss_message *message) {
 // 初始化服务的消息队列
 void 
 uboss_mq_init() {
-	struct global_queue *q = uboss_malloc(sizeof(*q));
-	memset(q,0,sizeof(*q));
-	SPIN_INIT(q);
-	Q=q;
+	struct global_queue *q = uboss_malloc(sizeof(*q)); // 声明一个全局队列的结构
+	memset(q,0,sizeof(*q)); // 清空结构
+	SPIN_INIT(q); // 初始化锁
+	Q=q; // 将结构的指针赋给全局变量
 }
 
 void 
