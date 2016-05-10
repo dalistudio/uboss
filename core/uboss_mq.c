@@ -45,7 +45,7 @@ static struct global_queue *Q = NULL; // 声明全局队列
 // 将服务的消息队列压入全局消息队列
 void 
 uboss_globalmq_push(struct message_queue * queue) {
-	struct global_queue *q= Q; // 声明 全局消息队列
+	struct global_queue *q= Q; // 获取 全局消息队列
 
 	SPIN_LOCK(q) // 锁住
 	assert(queue->next == NULL);
