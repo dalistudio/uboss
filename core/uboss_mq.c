@@ -1,7 +1,7 @@
 #include "uboss.h"
 #include "uboss_mq.h"
 #include "uboss_handle.h"
-#include "spinlock.h"
+#include "uboss_lock.h"
 
 #include <stdio.h>
 #include <stdlib.h>

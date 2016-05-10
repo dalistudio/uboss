@@ -1,6 +1,6 @@
 #include "uboss.h"
 #include "uboss_env.h"
-#include "spinlock.h"
+#include "uboss_lock.h"
 
 #include <lua.h>
 #include <lauxlib.h>

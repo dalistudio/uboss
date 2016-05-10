@@ -1,7 +1,7 @@
 #include "uboss.h"
 
 #include "uboss_module.h"
-#include "spinlock.h"
+#include "uboss_lock.h"
 
 #include <assert.h>
 #include <string.h>

@@ -5,7 +5,7 @@
 #include <lua.h>
 #include <stdio.h>
 
-#include "malloc_hook.h"
+#include "uboss_malloc.h"
 #include "uboss.h"
 #include "atomic.h"
 

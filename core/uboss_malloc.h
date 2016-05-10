@@ -2,11 +2,21 @@
 #define uboss_malloc_h
 
 #include <stddef.h>
+#include <lua.h>
 
 #define uboss_malloc malloc
 #define uboss_calloc calloc
 #define uboss_realloc realloc
 #define uboss_free free
+
+extern size_t malloc_used_memory(void);
+extern size_t malloc_memory_block(void);
+extern void   memory_info_dump(void);
+extern size_t mallctl_int64(const char* name, size_t* newval);
+extern int    mallctl_opt(const char* name, int* newval);
+extern void   dump_c_mem(void);
+extern int    dump_mem_lua(lua_State *L);
+extern size_t malloc_current_memory(void);
 
 void * uboss_malloc(size_t sz);
 void * uboss_calloc(size_t nmemb,size_t size);

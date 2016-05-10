@@ -1,12 +1,12 @@
 #include "uboss.h"
 #include "uboss_server.h"
-#include "uboss_imp.h"
+#include "uboss_start.h"
 #include "uboss_mq.h"
 #include "uboss_handle.h"
 #include "uboss_module.h"
 #include "uboss_timer.h"
 #include "uboss_monitor.h"
-//#include "uboss_socket.h"
+#include "uboss_socket.h"
 #include "uboss_daemon.h"
 #include "uboss_harbor.h"
 
@@ -54,7 +54,6 @@ wakeup(struct monitor *m, int busy) {
 	}
 }
 
-/*
 // Socket 线程
 static void *
 thread_socket(void *p) {
@@ -72,7 +71,6 @@ thread_socket(void *p) {
 	}
 	return NULL;
 }
-*/
 
 // 释放 监视器
 static void
@@ -165,7 +163,7 @@ thread_worker(void *p) {
 // 启动线程
 static void
 start(int thread) {
-	pthread_t pid[thread+2]; // 启动线程数量 3改2,屏蔽 socket 线程
+	pthread_t pid[thread+3]; // 启动线程数量
 
 	struct monitor *m = uboss_malloc(sizeof(*m));
 	memset(m, 0, sizeof(*m));
@@ -188,7 +186,7 @@ start(int thread) {
 
 	create_thread(&pid[0], thread_monitor, m); // 创建 监视器 线程
 	create_thread(&pid[1], thread_timer, m); // 创建 定时器 线程
-//	create_thread(&pid[2], thread_socket, m); // 创建 Socket网络 线程
+	create_thread(&pid[2], thread_socket, m); // 创建 Socket网络 线程
 
 	// 权重
 	static int weight[] = { 
@@ -211,7 +209,7 @@ start(int thread) {
 	}
 
 	// 等待 线程 结束
-	for (i=0;i<thread+2;i++) {
+	for (i=0;i<thread+3;i++) {
 		pthread_join(pid[i], NULL); 
 	}
 
@@ -247,7 +245,7 @@ uboss_start(struct uboss_config * config) {
 	uboss_mq_init(); // 初始化 消息队列模块
 	uboss_module_init(config->module_path); // 初始化 加载模块
 	uboss_timer_init(); // 初始化 定时器模块
-//	uboss_socket_init(); // 初始化 Socket网络模块
+	uboss_socket_init(); // 初始化 Socket网络模块
 
 	// 创建新的 uBoss 上下文， 用于 日志记录器
 	struct uboss_context *ctx = uboss_context_new(config->logservice, config->logger);
@@ -264,7 +262,7 @@ uboss_start(struct uboss_config * config) {
 
 	// harbor_exit may call socket send, so it should exit before socket_free
 	uboss_harbor_exit(); // 退出 集群
-//	uboss_socket_free(); // 释放 Socket
+	uboss_socket_free(); // 释放 Socket
 
 	// 退出 守护
 	if (config->daemon) {

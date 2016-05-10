@@ -24,9 +24,10 @@ MYOBJS=
 
 PLATS= linux macosx freebsd
 
-CORE_O=	malloc_hook.o uboss_start.o uboss_handle.o uboss_server.o \
+CORE_O=	uboss_malloc.o uboss_start.o uboss_handle.o uboss_server.o \
 	uboss_module.o uboss_mq.o uboss_monitor.o uboss_harbor.o \
-	uboss_error.o uboss_log.o uboss_timer.o uboss_daemon.o uboss_env.o
+	uboss_error.o uboss_log.o uboss_timer.o uboss_daemon.o \
+	uboss_env.o uboss_socket.o socket_server.o
 	
 BASE_O= $(CORE_O) $(MYOBJS)
 
@@ -79,7 +80,7 @@ freebsd:
 # DO NOT DELETE
 
 uboss.o: uboss.c
-malloc_hook.o: malloc_hook.h malloc_hook.c
+uboss_malloc.o: uboss_malloc.h uboss_malloc.c
 uboss_env.o: uboss_env.h uboss_env.c
 uboss_start.o: uboss_start.c
 uboss_handle.o: uboss_handle.h uboss_handle.c
@@ -92,5 +93,7 @@ uboss_error.o: uboss_error.c
 uboss_log.o: uboss_log.h uboss_log.c
 uboss_timer.o: uboss_timer.h uboss_timer.c
 uboss_daemon.o: uboss_daemon.h uboss_daemon.c
+uboss_socket.o: uboss_socket.h uboss_socket.c 
+socket_server.o: socket_server.h socket_server.c socket_poll.h
 
 # (end of Makefile)
