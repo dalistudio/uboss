@@ -21,10 +21,10 @@
 struct monitor {
 	int count; // 总数
 	struct uboss_monitor ** m; // uBoss监视器的结构
-	pthread_cond_t cond;
-	pthread_mutex_t mutex;
-	int sleep;
-	int quit;
+	pthread_cond_t cond; // 线程条件变量
+	pthread_mutex_t mutex; // 线程互斥锁
+	int sleep; // 休眠标志
+	int quit; // 退出标志
 };
 
 // 工作线程的参数
@@ -50,7 +50,7 @@ static void
 wakeup(struct monitor *m, int busy) {
 	if (m->sleep >= m->count - busy) {
 		// signal sleep worker, "spurious wakeup" is harmless
-		pthread_cond_signal(&m->cond);
+		pthread_cond_signal(&m->cond); // 激发等待 &m->cond 条件的线程
 	}
 }
 
@@ -123,10 +123,10 @@ thread_timer(void *p) {
 	// wakeup socket thread
 	uboss_socket_exit();  // 退出 Socket
 	// wakeup all worker thread
-	pthread_mutex_lock(&m->mutex);
-	m->quit = 1;
-	pthread_cond_broadcast(&m->cond);
-	pthread_mutex_unlock(&m->mutex);
+	pthread_mutex_lock(&m->mutex); // 设置互斥锁
+	m->quit = 1; // 设置退出标志
+	pthread_cond_broadcast(&m->cond); // 激发所有线程
+	pthread_mutex_unlock(&m->mutex); // 解开互斥锁
 	return NULL;
 }
 
@@ -143,14 +143,14 @@ thread_worker(void *p) {
 	while (!m->quit) {
 		q = uboss_context_message_dispatch(sm, q, weight); // 核心功能: 从消息队列中取出服务的消息
 		if (q == NULL) {
-			if (pthread_mutex_lock(&m->mutex) == 0) {
+			if (pthread_mutex_lock(&m->mutex) == 0) { // 设置互斥锁
 				++ m->sleep;
 				// "spurious wakeup" is harmless,
 				// because uboss_context_message_dispatch() can be call at any time.
 				if (!m->quit)
-					pthread_cond_wait(&m->cond, &m->mutex);
+					pthread_cond_wait(&m->cond, &m->mutex); // 无条件等待
 				-- m->sleep;
-				if (pthread_mutex_unlock(&m->mutex)) {
+				if (pthread_mutex_unlock(&m->mutex)) { // 解开互斥锁
 					fprintf(stderr, "unlock mutex error");
 					exit(1);
 				}
@@ -165,20 +165,26 @@ static void
 start(int thread) {
 	pthread_t pid[thread+3]; // 启动线程数量
 
-	struct monitor *m = uboss_malloc(sizeof(*m));
-	memset(m, 0, sizeof(*m));
-	m->count = thread;
-	m->sleep = 0;
+	struct monitor *m = uboss_malloc(sizeof(*m)); // 分配指针的内存空间
+	memset(m, 0, sizeof(*m)); // 内存清空
+	m->count = thread; // 线程数量
+	m->sleep = 0; // 休眠标志
 
-	m->m = uboss_malloc(thread * sizeof(struct uboss_monitor *));
+	m->m = uboss_malloc(thread * sizeof(struct uboss_monitor *)); // 分配监视器结构的内存空间
 	int i;
+
+	// 循环所有线程
 	for (i=0;i<thread;i++) {
 		m->m[i] = uboss_monitor_new(); // 新建 监视器
 	}
+
+	// 初始化线程互斥锁
 	if (pthread_mutex_init(&m->mutex, NULL)) {
 		fprintf(stderr, "Init mutex error");
 		exit(1);
 	}
+
+	// 初始化线程条件变量
 	if (pthread_cond_init(&m->cond, NULL)) {
 		fprintf(stderr, "Init cond error");
 		exit(1);

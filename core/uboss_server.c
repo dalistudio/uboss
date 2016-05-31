@@ -687,24 +687,28 @@ uboss_command(struct uboss_context * context, const char * cmd , const char * pa
 	return NULL;
 }
 
+// 过滤参数
 static void
 _filter_args(struct uboss_context * context, int type, int *session, void ** data, size_t * sz) {
 	int needcopy = !(type & PTYPE_TAG_DONTCOPY);
 	int allocsession = type & PTYPE_TAG_ALLOCSESSION;
 	type &= 0xff;
 
+	// 允许会话
 	if (allocsession) {
 		assert(*session == 0);
-		*session = uboss_context_newsession(context);
+		*session = uboss_context_newsession(context); // 新建会话
 	}
 
+	//  需要复制数据
 	if (needcopy && *data) {
-		char * msg = uboss_malloc(*sz+1);
-		memcpy(msg, *data, *sz);
-		msg[*sz] = '\0';
-		*data = msg;
+		char * msg = uboss_malloc(*sz+1); // 分配数据的内存空间
+		memcpy(msg, *data, *sz); // 复制数据到内存空间
+		msg[*sz] = '\0'; // 设置新数据的最后为0
+		*data = msg; // 将新数据的地址复制给原来数据地址
 	}
 
+	// 重建数据长度的值
 	*sz |= (size_t)type << MESSAGE_TYPE_SHIFT;
 }
 

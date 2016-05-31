@@ -9,8 +9,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#define DEFAULT_QUEUE_SIZE 64
-#define MAX_GLOBAL_MQ 0x10000
+#define DEFAULT_QUEUE_SIZE 64 // 默认队列大小
+#define MAX_GLOBAL_MQ 0x10000 // 全局消息队列最大值
 
 // 0 means mq is not in global mq.
 // 1 means mq is in global mq , or the message is dispatching.

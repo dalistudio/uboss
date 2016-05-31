@@ -6,23 +6,23 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PTYPE_TEXT 0
-#define PTYPE_RESPONSE 1
-#define PTYPE_MULTICAST 2
-#define PTYPE_CLIENT 3
-#define PTYPE_SYSTEM 4
-#define PTYPE_HARBOR 5
-#define PTYPE_SOCKET 6
+#define PTYPE_TEXT 0 // 文本类型
+#define PTYPE_RESPONSE 1 // 响应类型
+#define PTYPE_MULTICAST 2 // 组播类型
+#define PTYPE_CLIENT 3 // 客户端类型
+#define PTYPE_SYSTEM 4 // 系统类型
+#define PTYPE_HARBOR 5 // 集群类型
+#define PTYPE_SOCKET 6 // 网络类型
 // read lualib/uboss.lua examples/simplemonitor.lua
-#define PTYPE_ERROR 7	
+#define PTYPE_ERROR 7 // 错误类型
 // read lualib/uboss.lua lualib/mqueue.lua lualib/snax.lua
-#define PTYPE_RESERVED_QUEUE 8
-#define PTYPE_RESERVED_DEBUG 9
-#define PTYPE_RESERVED_LUA 10
-#define PTYPE_RESERVED_SNAX 11
+#define PTYPE_RESERVED_QUEUE 8 // 队列保留类型
+#define PTYPE_RESERVED_DEBUG 9 // 调试保留类型
+#define PTYPE_RESERVED_LUA 10 // Lua保留类型
+#define PTYPE_RESERVED_SNAX 11 // SNAX保留类型
 
-#define PTYPE_TAG_DONTCOPY 0x10000
-#define PTYPE_TAG_ALLOCSESSION 0x20000
+#define PTYPE_TAG_DONTCOPY 0x10000 // 不复制消息
+#define PTYPE_TAG_ALLOCSESSION 0x20000 // 允许会话
 
 struct uboss_context;
 

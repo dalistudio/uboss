@@ -8,8 +8,8 @@
 #include <assert.h>
 #include <string.h>
 
-#define DEFAULT_SLOT_SIZE 4
-#define MAX_SLOT_SIZE 0x40000000
+#define DEFAULT_SLOT_SIZE 4 // 默认槽的大小
+#define MAX_SLOT_SIZE 0x40000000 // 最大的槽大小值
 
 // 句柄的结构
 struct handle_name {
@@ -26,7 +26,7 @@ struct handle_storage {
 	int slot_size; // 句柄的槽
 	struct uboss_context ** slot; // uBoss 上下文的指针
 	
-	int name_cap;
+	int name_cap; // 名字的最大数
 	int name_count; // 名字总数
 	struct handle_name *name; // 句柄的结构
 };
@@ -284,9 +284,9 @@ uboss_handle_init(int harbor) {
 	// reserve 0 for system
 	s->harbor = (uint32_t) (harbor & 0xff) << HANDLE_REMOTE_SHIFT; // 集群ID
 	s->handle_index = 1; // 句柄的引索 
-	s->name_cap = 2;
-	s->name_count = 0; // 句柄的总数
-	s->name = uboss_malloc(s->name_cap * sizeof(struct handle_name));
+	s->name_cap = 2; // 名字的最大值
+	s->name_count = 0; // 名字的总数
+	s->name = uboss_malloc(s->name_cap * sizeof(struct handle_name)); // 分配名字的内存空间
 
 	H = s; // 设置 全局变量 的值
 
