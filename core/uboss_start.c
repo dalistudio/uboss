@@ -121,7 +121,7 @@ thread_timer(void *p) {
 		usleep(2500); // 睡眠 1/4 秒
 	}
 	// wakeup socket thread
-//	uboss_socket_exit();  // 退出 Socket
+	uboss_socket_exit();  // 退出 Socket
 	// wakeup all worker thread
 	pthread_mutex_lock(&m->mutex);
 	m->quit = 1;
@@ -231,7 +231,7 @@ bootstrap(struct uboss_context * logger, const char * cmdline) {
 	}
 }
 
-// 启动 Skynet 框架
+// 启动 uBoss 框架
 void 
 uboss_start(struct uboss_config * config) {
 	// 判断 是否配置 守护进程

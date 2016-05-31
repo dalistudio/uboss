@@ -22,19 +22,21 @@ struct lua {
 
 #else
 
+// 清理
 static int
 cleardummy(lua_State *L) {
   return 0;
 }
 
+// 代码缓冲
 static int 
 codecache(lua_State *L) {
 	luaL_Reg l[] = {
-		{ "clear", cleardummy },
-		{ "mode", cleardummy },
+		{ "clear", cleardummy }, // 清理
+		{ "mode", cleardummy }, // 模式
 		{ NULL, NULL },
 	};
-	luaL_newlib(L,l);
+	luaL_newlib(L,l); // 新库
 	lua_getglobal(L, "loadfile");
 	lua_setfield(L, -2, "loadfile");
 	return 1;
@@ -42,26 +44,29 @@ codecache(lua_State *L) {
 
 #endif
 
+// 追踪
 static int 
 traceback (lua_State *L) {
-	const char *msg = lua_tostring(L, 1);
+	const char *msg = lua_tostring(L, 1); // 获得消息
 	if (msg)
-		luaL_traceback(L, L, msg, 1);
+		luaL_traceback(L, L, msg, 1); // 追踪消息
 	else {
-		lua_pushliteral(L, "(no error message)");
+		lua_pushliteral(L, "(no error message)"); // 压入文字 没有错误消息
 	}
 	return 1;
 }
 
+// 报告启动错误
 static void
 _report_launcher_error(struct uboss_context *ctx) {
 	// sizeof "ERROR" == 5
 	uboss_sendname(ctx, 0, ".launcher", PTYPE_TEXT, 0, "ERROR", 5);
 }
 
+// 字符串
 static const char *
 optstring(struct uboss_context *ctx, const char *key, const char * str) {
-	const char * ret = uboss_command(ctx, "GETENV", key);
+	const char * ret = uboss_command(ctx, "GETENV", key); // 获得环境字符串
 	if (ret == NULL) {
 		return str;
 	}
@@ -83,31 +88,36 @@ _init(struct lua *l, struct uboss_context *ctx, const char * args, size_t sz) {
 	lua_pop(L,1); // 弹出
 
 	// 设置变量
-	const char *path = optstring(ctx, "lua_path","./service/lua/?.lua;./service/lua/?/init.lua");
+	const char *path = optstring(ctx, "lua_path","./service/lua/?.lua;./service/lua/?/init.lua"); // lua脚本的路径
 	lua_pushstring(L, path);
 	lua_setglobal(L, "LUA_PATH");
-	const char *cpath = optstring(ctx, "lua_cpath","./lib/lua/?.so");
+	const char *cpath = optstring(ctx, "lua_cpath","./lib/lua/?.so"); // lua模块的路径
 	lua_pushstring(L, cpath);
 	lua_setglobal(L, "LUA_CPATH");
-	const char *service = optstring(ctx, "luaservice", "./service/lua/?.lua");
+	const char *service = optstring(ctx, "luaservice", "./service/lua/?.lua"); // lua服务的路径
 	lua_pushstring(L, service);
 	lua_setglobal(L, "LUA_SERVICE");
-	const char *preload = uboss_command(ctx, "GETENV", "preload");
+	const char *preload = uboss_command(ctx, "GETENV", "preload"); // 重载
 	lua_pushstring(L, preload);
 	lua_setglobal(L, "LUA_PRELOAD");
 
-	lua_pushcfunction(L, traceback);
+	lua_pushcfunction(L, traceback); // 追踪
 	assert(lua_gettop(L) == 1);
 
-	const char * loader = optstring(ctx, "lualoader", "./service/lua/loader.lua");
+	const char * loader = optstring(ctx, "lualoader", "./service/lua/loader.lua"); // lua的加载器脚本名字
 
+	// 执行加载器脚本
 	int r = luaL_loadfile(L,loader);
 	if (r != LUA_OK) {
 		uboss_error(ctx, "Can't load %s : %s", loader, lua_tostring(L, -1));
 		_report_launcher_error(ctx);
 		return 1;
 	}
+
+	// 压入参数
 	lua_pushlstring(L, args, sz);
+
+	// 执行函数
 	r = lua_pcall(L,1,0,1);
 	if (r != LUA_OK) {
 		uboss_error(ctx, "lua loader error : %s", lua_tostring(L, -1));
@@ -168,7 +178,7 @@ lua_release(struct lua *l) {
 // 信号
 void
 lua_signal(struct lua *l, int signal) {
-	uboss_error(l->ctx, "recv a signal %d", signal);
+	uboss_error(l->ctx, "recv a signal %d", signal); // 打印接收到一个信号的消息
 #ifdef lua_checksig
 	// If our lua support signal (modified lua version by uboss), trigger it.
 	uboss_sig_L = l->L;
