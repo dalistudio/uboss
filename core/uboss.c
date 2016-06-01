@@ -151,7 +151,7 @@ main(int argc, char *argv[]) {
 
 	config.root = optstring("root","./"); // 根目录
 	config.thread =  optint("thread",8); // 启动工作线程数
-	config.module_path = optstring("cpath","./lib/uboss/?.so"); // C写的模块路径
+	config.module_path = optstring("module","./module/?.so"); // C写的模块路径
 	config.harbor = optint("harbor", 1); // 集群的编号
 	config.bootstrap = optstring("bootstrap","lua bootstrap"); // 启动脚本
 	config.daemon = optstring("daemon", NULL); // 守护进程 pid 路径

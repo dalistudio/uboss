@@ -88,13 +88,13 @@ _init(struct lua *l, struct uboss_context *ctx, const char * args, size_t sz) {
 	lua_pop(L,1); // 弹出
 
 	// 设置变量
-	const char *path = optstring(ctx, "lua_path","./service/lua/?.lua;./service/lua/?/init.lua"); // lua脚本的路径
+	const char *path = optstring(ctx, "lua_path","./service/?.lua;./service/?/init.lua"); // lua脚本的路径
 	lua_pushstring(L, path);
 	lua_setglobal(L, "LUA_PATH");
-	const char *cpath = optstring(ctx, "lua_cpath","./lib/lua/?.so"); // lua模块的路径
+	const char *cpath = optstring(ctx, "lua_cpath","./lib/?.so"); // lua模块的路径
 	lua_pushstring(L, cpath);
 	lua_setglobal(L, "LUA_CPATH");
-	const char *service = optstring(ctx, "luaservice", "./service/lua/?.lua"); // lua服务的路径
+	const char *service = optstring(ctx, "luaservice", "./service/?.lua"); // lua服务的路径
 	lua_pushstring(L, service);
 	lua_setglobal(L, "LUA_SERVICE");
 	const char *preload = uboss_command(ctx, "GETENV", "preload"); // 重载
@@ -104,7 +104,7 @@ _init(struct lua *l, struct uboss_context *ctx, const char * args, size_t sz) {
 	lua_pushcfunction(L, traceback); // 追踪
 	assert(lua_gettop(L) == 1);
 
-	const char * loader = optstring(ctx, "lualoader", "./service/lua/loader.lua"); // lua的加载器脚本名字
+	const char * loader = optstring(ctx, "lualoader", "./service/loader.lua"); // lua的加载器脚本名字
 
 	// 执行加载器脚本
 	int r = luaL_loadfile(L,loader);
