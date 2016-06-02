@@ -115,12 +115,20 @@ static const char * load_config = "\
 // uBoss 标志
 void
 logo() {
-	fprintf(stdout, "==================================================\n");
-	fprintf(stdout, "=                  uBoss Server                  =\n");
-	fprintf(stdout, "=     A lightweight micro service framework      =\n");
-	fprintf(stdout, "=                                                =\n");
-	fprintf(stdout, "=                                %s     =\n",__DATE__);
-	fprintf(stdout, "==================================================\n\n");
+	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");
+	fprintf(stdout, "\n\n");
+	fprintf(stdout, "                        ########                                       \n");
+	fprintf(stdout, "                          ##    ##                %s                   \n",__DATE__);
+	fprintf(stdout, "        ##    ##          ##    ##                                     \n");
+	fprintf(stdout, "        ##    ##          ######        ####      ########    ######## \n");
+	fprintf(stdout, "        ##    ##          ##    ##    ##    ##    ##          ##       \n");
+	fprintf(stdout, "        ##    ##          ##    ##    ##    ##      ####        ####   \n");
+	fprintf(stdout, "        ##  ####          ##    ##    ##    ##          ##          ## \n");
+	fprintf(stdout, "        ####  ##  ##    ########        ####      ########    ######## \n");
+	fprintf(stdout, "        ##    ####                                                     \n");
+	fprintf(stdout, "        ##                 A lightweight micro service framework       \n");
+	fprintf(stdout, "\n\n");
+	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");
 }
 
 // 主函数
