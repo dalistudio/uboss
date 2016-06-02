@@ -1,0 +1,8 @@
+[:01000001] LAUNCH logger uboss.log
+[:01000002] LAUNCH lua bootstrap
+[:01000002] lua loader error : ./service/bootstrap.lua:10: bad argument #2 to 'unpack' (number expected, got no value)
+stack traceback:
+	[C]: in function 'uboss.core.unpack'
+	./service/bootstrap.lua:10: in local 'main'
+	service/loader.lua:48: in main chunk
+[:01000002] KILL self
