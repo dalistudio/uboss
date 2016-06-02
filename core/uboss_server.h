@@ -1,10 +1,62 @@
 #ifndef UBOSS_SERVER_H
 #define UBOSS_SERVER_H
 
+#include <string.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-struct uboss_context;
+#ifdef CALLING_CHECK
+
+#define CHECKCALLING_BEGIN(ctx) if (!(spinlock_trylock(&ctx->calling))) { assert(0); }
+#define CHECKCALLING_END(ctx) spinlock_unlock(&ctx->calling);
+#define CHECKCALLING_INIT(ctx) spinlock_init(&ctx->calling);
+#define CHECKCALLING_DESTROY(ctx) spinlock_destroy(&ctx->calling);
+#define CHECKCALLING_DECL struct spinlock calling;
+
+#else
+
+#define CHECKCALLING_BEGIN(ctx)
+#define CHECKCALLING_END(ctx)
+#define CHECKCALLING_INIT(ctx)
+#define CHECKCALLING_DESTROY(ctx)
+#define CHECKCALLING_DECL
+
+#endif
+
+// uBoss 上下文结构
+struct uboss_context {
+	void * instance; // 实例
+	struct uboss_module * mod; // 模块
+	void * cb_ud; // 用户数据的指针
+	uboss_cb cb; // 服务模块的返回函数指针
+	struct message_queue *queue; // 消息队列
+	FILE * logfile; // 日志文件流
+	char result[32]; // 结果
+	uint32_t handle; // 句柄值
+	int session_id; // 会话 ID
+	int ref; // 调用次数
+	bool init; // 初始化
+	bool endless; // 终结标志
+
+	CHECKCALLING_DECL
+};
+
+// uBoss 的节点
+struct uboss_node {
+	int total; // 节点总数
+	int init;
+	uint32_t monitor_exit;
+	pthread_key_t handle_key;
+};
+
+// 声明静态全局变量
+// 由于静态全局变量只能在本文件中使用
+// 所有暂时去掉静态，有待测试
+//static struct uboss_node G_NODE;
+struct uboss_node G_NODE;
+
 struct uboss_message;
 struct uboss_monitor;
 

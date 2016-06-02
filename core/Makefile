@@ -9,13 +9,13 @@ PLAT= none
 CC= gcc -std=gnu99
 CFLAGS= -O2 -fPIC -Wall -Wl,-E -DNOUSE_JEMALLOC $(SYSCFLAGS) $(MYCFLAGS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
-LIBS= ../3rd/lua-5.3.2/src/liblua.a -lpthread -ldl -lm $(SYSLIBS) $(MYLIBS)
+LIBS= ../3rd/lua/src/liblua.a -lpthread -ldl -lm $(SYSLIBS) $(MYLIBS)
 
 SYSCFLAGS=
 SYSLDFLAGS=
 SYSLIBS=
 
-MYCFLAGS=  -I../3rd/lua-5.3.2/src
+MYCFLAGS=  -I../3rd/lua/src
 MYLDFLAGS= 
 MYLIBS=
 MYOBJS=
@@ -27,7 +27,7 @@ PLATS= linux macosx freebsd
 CORE_O=	uboss_malloc.o uboss_start.o uboss_handle.o uboss_server.o \
 	uboss_module.o uboss_mq.o uboss_monitor.o uboss_harbor.o \
 	uboss_error.o uboss_log.o uboss_timer.o uboss_daemon.o \
-	uboss_env.o uboss_socket.o socket_server.o
+	uboss_env.o uboss_command.o uboss_socket.o socket_server.o
 	
 BASE_O= $(CORE_O) $(MYOBJS)
 
@@ -86,6 +86,7 @@ uboss_start.o: uboss_start.c
 uboss_handle.o: uboss_handle.h uboss_handle.c
 uboss_module.o: uboss_module.h uboss_module.c
 uboss_mq.o: uboss_mq.h uboss_mq.c
+uboss_command.o: uboss_command.c
 uboss_server.o: uboss_server.h uboss_server.c
 uboss_monitor.o: uboss_monitor.h uboss_monitor.c
 uboss_harbor.o: uboss_harbor.h uboss_harbor.c
