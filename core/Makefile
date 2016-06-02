@@ -9,13 +9,13 @@ PLAT= none
 CC= gcc -std=gnu99
 CFLAGS= -O2 -fPIC -Wall -Wl,-E -DNOUSE_JEMALLOC $(SYSCFLAGS) $(MYCFLAGS)
 LDFLAGS= $(SYSLDFLAGS) $(MYLDFLAGS)
-LIBS= ../3rd/lua-5.3.2/src/liblua.a -lpthread -ldl -lm $(SYSLIBS) $(MYLIBS)
+LIBS= ../3rd/lua/src/liblua.a -lpthread -ldl -lm $(SYSLIBS) $(MYLIBS)
 
 SYSCFLAGS=
 SYSLDFLAGS=
 SYSLIBS=
 
-MYCFLAGS=  -I../3rd/lua-5.3.2/src
+MYCFLAGS=  -I../3rd/lua/src
 MYLDFLAGS= 
 MYLIBS=
 MYOBJS=
