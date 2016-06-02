@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 // uBoss 的 luaVM 沙盒
-struct lua {
+struct luavm {
 	lua_State * L; // luaVM
 	struct uboss_context * ctx; // uBoss 上下文
 };
@@ -75,7 +75,7 @@ optstring(struct uboss_context *ctx, const char *key, const char * str) {
 
 // 初始化
 static int
-_init(struct lua *l, struct uboss_context *ctx, const char * args, size_t sz) {
+_init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) {
 	lua_State *L = l->L; // 设置 luaVM 状态机的地址
 	l->ctx = ctx; // 设置 uBoss 上下文
 	lua_gc(L, LUA_GCSTOP, 0); // 设置回收机制的标志
@@ -135,7 +135,7 @@ _init(struct lua *l, struct uboss_context *ctx, const char * args, size_t sz) {
 static int
 _launch(struct uboss_context * context, void *ud, int type, int session, uint32_t source , const void * msg, size_t sz) {
 	assert(type == 0 && session == 0); // 断言
-	struct lua *l = ud; // 结构地址
+	struct luavm *l = ud; // 结构地址
 	uboss_callback(context, NULL, NULL); // 设置回调函数
 	int err = _init(l, context, msg, sz); // 初始化
 	if (err) {
@@ -147,7 +147,7 @@ _launch(struct uboss_context * context, void *ud, int type, int session, uint32_
 
 // 初始化
 int
-lua_init(struct lua *l, struct uboss_context *ctx, const char * args) {
+luavm_init(struct luavm *l, struct uboss_context *ctx, const char * args) {
 	int sz = strlen(args); // 计算参数的长度
 	char * tmp = uboss_malloc(sz); // 分配内存空间
 	memcpy(tmp, args, sz); // 复制参数到内存空间
@@ -160,9 +160,9 @@ lua_init(struct lua *l, struct uboss_context *ctx, const char * args) {
 }
 
 // 创建
-struct lua *
-lua_create(void) {
-	struct lua * l = uboss_malloc(sizeof(*l)); // 分配内存空间
+struct luavm *
+luavm_create(void) {
+	struct luavm * l = uboss_malloc(sizeof(*l)); // 分配内存空间
 	memset(l,0,sizeof(*l)); // 清空内存
 	l->L = lua_newstate(uboss_lalloc, NULL); // 新建 luaVM 状态机
 	return l;
@@ -170,14 +170,14 @@ lua_create(void) {
 
 // 释放
 void
-lua_release(struct lua *l) {
+luavm_release(struct luavm *l) {
 	lua_close(l->L); // 关闭 luaVM
 	uboss_free(l); // 释放内存空间
 }
 
 // 信号
 void
-lua_signal(struct lua *l, int signal) {
+luavm_signal(struct luavm *l, int signal) {
 	uboss_error(l->ctx, "recv a signal %d", signal); // 打印接收到一个信号的消息
 #ifdef lua_checksig
 	// If our lua support signal (modified lua version by uboss), trigger it.

@@ -66,10 +66,10 @@ update3rd :
 ###
 
 # uBoss 的模块
-MODULE = lua logger
+MODULE = luavm logger
 
 # Lua 的库
-LUA_CLIB = uboss profile
+LUA_CLIB = uboss socket profile
 
 # uBoss 核心
 UBOSS_CORE = uboss.c uboss_handle.c uboss_module.c uboss_mq.c \
@@ -106,6 +106,9 @@ $(foreach v, $(MODULE), $(eval $(call MODULE_TEMP,$(v))))
 ###
 $(LUA_LIB_PATH)/uboss.so : lib/uboss/lua-uboss.c lib/uboss/lua-seri.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+
+$(LUA_LIB_PATH)/socket.so : lib/socket/lua-socket.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule
 
 $(LUA_LIB_PATH)/profile.so : lib/profile/lua-profile.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ 
