@@ -1,99 +1,91 @@
-# Makefile for installing uBoss
-# See doc/readme.html for installation and customization instructions.
+include platform.mk
 
-# == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
+LUA_CLIB_PATH ?= lib
+MODULE_PATH ?= module
 
-# Your platform. See PLATS for possible values.
-PLAT= none
+UBOSS_BUILD_PATH ?= .
 
-# Where to install. The installation starts in the src and doc directories,
-# so take care if INSTALL_TOP is not an absolute path. See the local target.
-INSTALL_TOP= /opt/uboss
-INSTALL_BIN= $(INSTALL_TOP)/bin
-INSTALL_LIB= $(INSTALL_TOP)/lib
+CFLAGS = -g -O2 -Wall -I$(LUA_INC) $(MYCFLAGS)
+# CFLAGS += -DUSE_PTHREAD_LOCK
 
-# How to install. If your install program does not support "-p", then
-# you may have to run ranlib on the installed liblua.a.
-INSTALL= install -p
-INSTALL_EXEC= $(INSTALL) -m 0755
-INSTALL_DATA= $(INSTALL) -m 0644
-#
-# If you don't have "install" you can use "cp" instead.
-# INSTALL= cp -p
-# INSTALL_EXEC= $(INSTALL)
-# INSTALL_DATA= $(INSTALL)
+# lua
 
-# Other utilities.
-MKDIR= mkdir -p
-RM= rm -f
+LUA_STATICLIB := 3rd/lua/src/liblua.a
+LUA_LIB ?= $(LUA_STATICLIB)
+LUA_INC ?= 3rd/lua/src
 
-# == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
+$(LUA_STATICLIB) :
+	cd 3rd/lua && $(MAKE) CC='$(CC) -std=gnu99' $(PLAT)
 
-# Convenience platforms targets.
-PLATS= linux macosx mingw freebsd
+# jemalloc 
 
-# What to install.
-TO_BIN= uboss
-TO_LIB= libuboss.a libuboss.so
+JEMALLOC_STATICLIB := 3rd/jemalloc/lib/libjemalloc_pic.a
+JEMALLOC_INC := 3rd/jemalloc/include/jemalloc
 
-# uBoss version and release.
-V= 1.0
-R= $V.0
+all : jemalloc
+	
+.PHONY : jemalloc update3rd
 
-# Targets start here.
-all:	$(PLAT)
+MALLOC_STATICLIB := $(JEMALLOC_STATICLIB)
 
-$(PLATS) clean:
-	cd core && $(MAKE) $@
+$(JEMALLOC_STATICLIB) : 3rd/jemalloc/Makefile
+	cd 3rd/jemalloc && $(MAKE) CC=$(CC) 
 
-install:
-	cd core && $(MKDIR) $(INSTALL_BIN) $(INSTALL_LIB)
-	cd core && $(INSTALL_EXEC) $(TO_BIN) $(INSTALL_BIN)
-	cd core && $(INSTALL_DATA) $(TO_LIB) $(INSTALL_LIB)
+3rd/jemalloc/autogen.sh :
+	git submodule update --init
 
-uninstall:
-	cd core && cd $(INSTALL_BIN) && $(RM) $(TO_BIN)
-	cd core && cd $(INSTALL_LIB) && $(RM) $(TO_LIB)
+3rd/jemalloc/Makefile : | 3rd/jemalloc/autogen.sh
+	cd 3rd/jemalloc && ./autogen.sh --with-jemalloc-prefix=je_ --disable-valgrind
 
-local:
-	$(MAKE) install INSTALL_TOP=../install
+jemalloc : $(MALLOC_STATICLIB)
 
-none:
-	@echo "Please do 'make PLATFORM' where PLATFORM is one of these:"
-	@echo "   $(PLATS)"
-	@echo "See doc/readme.html for complete instructions."
+update3rd :
+	rm -rf 3rd/jemalloc && git submodule update --init
 
-# make may get confused with test/ and install/
-dummy:
+# uboss
 
-# echo config parameters
-echo:
-	@cd core && $(MAKE) -s echo
-	@echo "PLAT= $(PLAT)"
-	@echo "V= $V"
-	@echo "R= $R"
-	@echo "TO_BIN= $(TO_BIN)"
-	@echo "TO_INC= $(TO_INC)"
-	@echo "TO_LIB= $(TO_LIB)"
-	@echo "TO_MAN= $(TO_MAN)"
-	@echo "INSTALL_TOP= $(INSTALL_TOP)"
-	@echo "INSTALL_BIN= $(INSTALL_BIN)"
-	@echo "INSTALL_INC= $(INSTALL_INC)"
-	@echo "INSTALL_LIB= $(INSTALL_LIB)"
-	@echo "INSTALL_MAN= $(INSTALL_MAN)"
-	@echo "INSTALL_LMOD= $(INSTALL_LMOD)"
-	@echo "INSTALL_CMOD= $(INSTALL_CMOD)"
-	@echo "INSTALL_EXEC= $(INSTALL_EXEC)"
-	@echo "INSTALL_DATA= $(INSTALL_DATA)"
+MODULE = lua logger
+LUA_CLIB = uboss 
 
-# echo pkg-config data
-pc:
-	@echo "version=$R"
-	@echo "prefix=$(INSTALL_TOP)"
-	@echo "libdir=$(INSTALL_LIB)"
-	@echo "includedir=$(INSTALL_INC)"
+UBOSS_SRC = uboss.c uboss_handle.c uboss_module.c uboss_mq.c \
+  uboss_server.c uboss_start.c uboss_timer.c uboss_error.c \
+  uboss_harbor.c uboss_env.c uboss_monitor.c uboss_socket.c socket_server.c \
+  uboss_malloc.c uboss_daemon.c uboss_log.c uboss_command.c
 
-# list targets that do not create files (but not all makes understand .PHONY)
-.PHONY: all $(PLATS) clean install local none echo pecho lecho
+all : \
+  $(UBOSS_BUILD_PATH)/uboss \
+  $(foreach v, $(MODULE), $(MODULE_PATH)/$(v).so) \
+  $(foreach v, $(LUA_CLIB), $(LUA_CLIB_PATH)/$(v).so) 
 
-# (end of Makefile)
+$(UBOSS_BUILD_PATH)/uboss : $(foreach v, $(UBOSS_SRC), core/$(v)) $(LUA_LIB) $(MALLOC_STATICLIB)
+	$(CC) $(CFLAGS) -o $@ $^ -Icore -I$(JEMALLOC_INC) $(LDFLAGS) $(EXPORT) $(UBOSS_LIBS) $(UBOSS_DEFINES)
+
+$(LUA_CLIB_PATH) :
+	mkdir $(LUA_CLIB_PATH)
+
+$(MODULE_PATH) :
+	mkdir $(MODULE_PATH)
+
+define MODULE_TEMP
+  $$(MODULE_PATH)/$(1).so : module/$(1)/module_$(1).c | $$(MODULE_PATH)
+	$$(CC) $$(CFLAGS) $$(SHARED) $$< -o $$@ -Icore
+endef
+
+$(foreach v, $(MODULE), $(eval $(call MODULE_TEMP,$(v))))
+
+# lua Lib
+$(LUA_CLIB_PATH)/uboss.so : lib/uboss/lua-uboss.c lib/uboss/lua-seri.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+
+
+
+clean :
+	rm -f $(UBOSS_BUILD_PATH)/uboss $(MODULE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
+
+cleanall: clean
+ifneq (,$(wildcard 3rd/jemalloc/Makefile))
+	cd 3rd/jemalloc && $(MAKE) clean
+endif
+	cd 3rd/lua && $(MAKE) clean
+	rm -f $(LUA_STATICLIB)
+
