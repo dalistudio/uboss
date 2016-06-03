@@ -1,2 +1,2 @@
-print "www";
+print("this is bootstrap.lua")
 

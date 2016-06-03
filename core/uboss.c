@@ -117,7 +117,7 @@ void
 logo() {
 	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");
 	fprintf(stdout, "\n\n");
-	fprintf(stdout, "                        ########                                       \n");
+	fprintf(stdout, "                        ########              Powered by uboss.org     \n");
 	fprintf(stdout, "                          ##    ##                %s                   \n",__DATE__);
 	fprintf(stdout, "        ##    ##          ##    ##                                     \n");
 	fprintf(stdout, "        ##    ##          ######        ####      ########    ######## \n");
@@ -182,7 +182,7 @@ main(int argc, char *argv[]) {
 	config.daemon = optstring("daemon", NULL); // 守护进程 pid 路径
 
 	config.logservice = optstring("logservice", "logger"); // 日志记录器的服务
-	config.logger = optstring("logger", "log/uboss.log"); // 日志记录器
+	config.logger = optstring("logger", NULL); // 日志记录器
 	config.logpath = optstring("logpath", "./log/"); // 保存日志的路径
 	
 

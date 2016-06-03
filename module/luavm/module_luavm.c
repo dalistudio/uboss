@@ -91,23 +91,23 @@ _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) 
 	const char *path = optstring(ctx, "lua_path","./service/?.lua;./service/?/init.lua"); // lua脚本的路径
 	lua_pushstring(L, path);
 	lua_setglobal(L, "LUA_PATH");
-	const char *cpath = optstring(ctx, "lua_cpath","./lib/?.so"); // lua模块的路径
+	const char *cpath = optstring(ctx, "lua_lib","./lib/?.so"); // lua库的路径
 	lua_pushstring(L, cpath);
-	lua_setglobal(L, "LUA_CPATH");
-	const char *service = optstring(ctx, "luaservice", "./service/?.lua"); // lua服务的路径
+	lua_setglobal(L, "LUA_LIB");
+	const char *service = optstring(ctx, "lua_service", "./service/?.lua"); // lua服务的路径
 	lua_pushstring(L, service);
 	lua_setglobal(L, "LUA_SERVICE");
-	const char *preload = uboss_command(ctx, "GETENV", "preload"); // 重载
+	const char *preload = uboss_command(ctx, "GETENV", "preload"); // 预加载
 	lua_pushstring(L, preload);
 	lua_setglobal(L, "LUA_PRELOAD");
 
 	lua_pushcfunction(L, traceback); // 追踪
 	assert(lua_gettop(L) == 1);
 
-	const char * loader = optstring(ctx, "lualoader", "./service/loader.lua"); // lua的加载器脚本名字
+	const char * loader = optstring(ctx, "lua_loader", "./service/loader.lua"); // lua的加载器脚本名字
 
 	// 执行加载器脚本
-	int r = luaL_loadfile(L,loader);
+	int r = luaL_loadfile(L,loader); // 执行所有 lua 脚本，都必须要用 loader 加载器
 	if (r != LUA_OK) {
 		uboss_error(ctx, "Can't load %s : %s", loader, lua_tostring(L, -1));
 		_report_launcher_error(ctx);
@@ -115,10 +115,10 @@ _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) 
 	}
 
 	// 压入参数
-	lua_pushlstring(L, args, sz);
+	lua_pushlstring(L, args, sz); // 压入执行的 lua 脚本路径
 
 	// 执行函数
-	r = lua_pcall(L,1,0,1);
+	r = lua_pcall(L,1,0,1); // 执行 loader 加载器
 	if (r != LUA_OK) {
 		uboss_error(ctx, "lua loader error : %s", lua_tostring(L, -1));
 		_report_launcher_error(ctx);
