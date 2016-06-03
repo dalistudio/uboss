@@ -1,0 +1,6 @@
+数据库例子
+
+实现多种数据库的访问
+    1、支持 MySQL
+    2、支持 Oracle
+    3、支持 Memcached
