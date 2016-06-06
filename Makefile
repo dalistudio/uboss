@@ -66,7 +66,7 @@ update3rd :
 ###
 
 # uBoss 的模块
-MODULE = luavm logger harbor
+MODULE = luavm logger harbor monitor
 
 # Lua 的库
 LUA_CLIB = uboss socket profile
