@@ -5,34 +5,40 @@
 #include <string.h>
 #include <assert.h>
 
+// 消息池的长度
 #define MESSAGEPOOL 1023
 
+// 消息的结构
 struct message {
-	char * buffer;
-	int size;
-	struct message * next;
+	char * buffer; // 缓冲区
+	int size; // 大小
+	struct message * next; // 下一缓冲区
 };
 
+// 数据缓冲区的结构
 struct databuffer {
-	int header;
-	int offset;
-	int size;
-	struct message * head;
-	struct message * tail;
+	int header; // 头部
+	int offset; // 偏移
+	int size; // 大小
+	struct message * head; // 头部指针
+	struct message * tail; // 尾部指针
 };
 
+// 消息池链表的结构
 struct messagepool_list {
-	struct messagepool_list *next;
-	struct message pool[MESSAGEPOOL];
+	struct messagepool_list *next; // 下一消息池的指针
+	struct message pool[MESSAGEPOOL]; // 消息池数组
 };
 
+// 消息池
 struct messagepool {
-	struct messagepool_list * pool;
-	struct message * freelist;
+	struct messagepool_list * pool; // 消息池链表的指针
+	struct message * freelist; // 释放消息链表的指针
 };
 
 // use memset init struct 
 
+// 释放消息池
 static void 
 messagepool_free(struct messagepool *pool) {
 	struct messagepool_list *p = pool->pool;
@@ -45,6 +51,7 @@ messagepool_free(struct messagepool *pool) {
 	pool->freelist = NULL;
 }
 
+// 返回消息
 static inline void
 _return_message(struct databuffer *db, struct messagepool *mp) {
 	struct message *m = db->head;
@@ -61,6 +68,7 @@ _return_message(struct databuffer *db, struct messagepool *mp) {
 	mp->freelist = m;
 }
 
+// 从数据缓冲区读取数据
 static void
 databuffer_read(struct databuffer *db, struct messagepool *mp, void * buffer, int sz) {
 	assert(db->size >= sz);
@@ -88,6 +96,7 @@ databuffer_read(struct databuffer *db, struct messagepool *mp, void * buffer, in
 	}
 }
 
+// 将数据压入数据缓冲区
 static void
 databuffer_push(struct databuffer *db, struct messagepool *mp, void *data, int sz) {
 	struct message * m;
@@ -122,6 +131,7 @@ databuffer_push(struct databuffer *db, struct messagepool *mp, void *data, int s
 	}
 }
 
+// 从数据缓冲区中读取头数据
 static int
 databuffer_readheader(struct databuffer *db, struct messagepool *mp, int header_size) {
 	if (db->header == 0) {
@@ -143,17 +153,19 @@ databuffer_readheader(struct databuffer *db, struct messagepool *mp, int header_
 	return db->header;
 }
 
+// 重置数据缓冲区
 static inline void
 databuffer_reset(struct databuffer *db) {
 	db->header = 0;
 }
 
+// 清理数据缓冲区
 static void
 databuffer_clear(struct databuffer *db, struct messagepool *mp) {
 	while (db->head) {
 		_return_message(db,mp);
 	}
-	memset(db, 0, sizeof(*db));
+	memset(db, 0, sizeof(*db)); // 清空内存
 }
 
 #endif
