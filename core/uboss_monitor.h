@@ -11,8 +11,8 @@
 struct uboss_monitor;
 
 struct uboss_monitor * uboss_monitor_new();
-void uboss_monitor_delete(struct uboss_monitor *);
-void uboss_monitor_trigger(struct uboss_monitor *, uint32_t source, uint32_t destination);
-void uboss_monitor_check(struct uboss_monitor *);
+void uboss_monitor_delete(struct uboss_monitor *um);
+void uboss_monitor_trigger(struct uboss_monitor *um, uint32_t source, uint32_t destination);
+void uboss_monitor_check(struct uboss_monitor *um);
 
 #endif

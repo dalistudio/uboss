@@ -1,0 +1,42 @@
+创建监视器
+struct uboss_monitor * uboss_monitor_new();
+
+参数：
+	void
+返回值：
+	uboss_monitor - 监视器指针
+
+触发监视器
+void uboss_monitor_trigger(struct uboss_monitor * um, uint32_t source, uint32_t destination);
+
+参数：
+	um - 监视器指针
+	source - 来源地址
+	destination - 目标地址
+
+返回值：
+	void
+
+
+
+检测监视器
+void uboss_monitor_check(struct uboss_monitor * um);
+
+参数：
+	um - 监视器指针
+
+返回值：
+	void
+
+
+删除监视器
+void uboss_monitor_delete(struct uboss_monitor * um);
+
+参数：
+	um - 监视器指针
+
+返回值：
+	void
+
+
+

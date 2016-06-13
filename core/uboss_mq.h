@@ -27,7 +27,7 @@ void uboss_mq_mark_release(struct message_queue *q);
 typedef void (*message_drop)(struct uboss_message *, void *);
 
 void uboss_mq_release(struct message_queue *q, message_drop drop_func, void *ud);
-uint32_t uboss_mq_handle(struct message_queue *);
+uint32_t uboss_mq_handle(struct message_queue *q);
 
 // 0 for success
 int uboss_mq_pop(struct message_queue *q, struct uboss_message *message);

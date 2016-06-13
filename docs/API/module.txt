@@ -1,0 +1,73 @@
+初始化模块
+void uboss_module_init(const char *path);
+
+参数：
+	path - 模块的路径
+
+返回值：
+	void
+
+
+插入模块到链表
+void uboss_module_insert(struct uboss_module *mod);
+
+参数：
+	mod - 指向一个模块的结构
+返回值：
+	void
+
+根据名字查询链表中的模块
+struct uboss_module * uboss_module_query(const char * name);
+
+参数：
+	name - 模块的名字
+
+返回值：
+	uboss_module - 模块的结构
+
+
+
+初始化模块的实例
+int uboss_module_instance_init(struct uboss_module * m, void * inst, struct uboss_context *ctx, const char * parm);
+
+参数：
+	m - 指向一个模块的结构
+	inst - 模块实例的地址
+	ctx - uboss 的上下文
+	parm - 参数
+
+返回值：
+	int
+
+
+创建模块的实例
+void * uboss_module_instance_create(struct uboss_module * m);
+
+参数：
+	m - 指向一个模块的结构
+
+返回值：
+	void
+
+
+
+模块信号的实例
+void uboss_module_instance_signal(struct uboss_module * m, void *inst, int signal);
+
+参数：
+	m - 指向一个模块的结构
+	inst - 实例的指针
+	signal - 信号的值
+
+
+释放模块的实例
+void uboss_module_instance_release(struct uboss_module * m, void *inst);
+
+参数：
+	m - 指向一个模块的结构
+	inst - 实例的指针
+
+
+
+
+

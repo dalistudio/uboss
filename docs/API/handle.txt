@@ -1,0 +1,76 @@
+初始化句柄
+void uboss_handle_init(int harbor);
+
+参数：
+	harbor 
+
+返回值：
+	void
+
+
+关联名字和句柄
+const char * uboss_handle_namehandle(uint32_t handle, const char *name);
+
+参数：
+	handle - 句柄的值
+	name   - 名字
+
+返回值：
+	char *
+
+
+
+根据名字查找句柄
+uint32_t uboss_handle_findname(const char * name);
+
+参数：
+	name  - 名字
+
+返回值：
+	uint32_t - 句柄的值
+
+
+注册uboss上下文
+uint32_t uboss_handle_register(struct uboss_context *);
+
+参数：
+	uboss_context - uboss的上下文
+
+返回值：
+	uint32_t - 句柄的值
+
+
+
+根据句柄值取出uboss上下文
+struct uboss_context * uboss_handle_grab(uint32_t handle);
+
+参数：
+	handle - 句柄的值
+
+返回值：
+	uboss_context - uboss的上下文
+
+
+回收句柄
+int uboss_handle_retire(uint32_t handle);
+
+参数：
+	handle - 句柄的值
+
+返回值：
+	int -
+
+
+
+回收所有句柄
+void uboss_handle_retireall();
+
+参数：
+
+返回值：
+	void
+
+
+
+
+

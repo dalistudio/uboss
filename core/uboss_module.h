@@ -20,10 +20,10 @@ struct uboss_module {
 
 void uboss_module_insert(struct uboss_module *mod);
 struct uboss_module * uboss_module_query(const char * name);
-void * uboss_module_instance_create(struct uboss_module *);
-int uboss_module_instance_init(struct uboss_module *, void * inst, struct uboss_context *ctx, const char * parm);
-void uboss_module_instance_release(struct uboss_module *, void *inst);
-void uboss_module_instance_signal(struct uboss_module *, void *inst, int signal);
+void * uboss_module_instance_create(struct uboss_module *m);
+int uboss_module_instance_init(struct uboss_module *m, void * inst, struct uboss_context *ctx, const char * parm);
+void uboss_module_instance_release(struct uboss_module *m, void *inst);
+void uboss_module_instance_signal(struct uboss_module *m, void *inst, int signal);
 
 void uboss_module_init(const char *path);
 

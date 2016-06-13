@@ -1,0 +1,131 @@
+
+
+typedef void (*message_drop)(struct uboss_message *, void *);
+
+
+初始化消息队列
+void uboss_mq_init();
+
+参数：
+	void
+
+返回值：
+	void
+
+
+
+压入全局消息队列
+void uboss_globalmq_push(struct message_queue * queue);
+
+参数：
+	queue - 消息队列
+
+返回值：
+	void
+
+
+弹出全局消息队列
+struct message_queue * uboss_globalmq_pop(void);
+
+参数：
+	void
+
+返回值：
+	message_queue - 消息队列
+
+
+
+
+创建消息队列
+struct message_queue * uboss_mq_create(uint32_t handle);
+
+参数：
+	handle - 句柄的值
+
+返回值：
+	message_queue - 消息队列
+
+
+标志消息队列可释放
+void uboss_mq_mark_release(struct message_queue *q);
+
+参数：
+	q - 消息队列
+
+返回值：
+	void
+
+
+
+释放消息队列
+void uboss_mq_release(struct message_queue *q, message_drop drop_func, void *ud);
+
+参数：
+	q - 消息队列
+	drop_func - 释放函数指针
+	ud - 用户数据
+
+返回值：
+	void
+
+
+
+获得消息队列对应的句柄值
+uint32_t uboss_mq_handle(struct message_queue * q);
+
+参数：
+	q - 消息队列
+
+返回值：
+	uint32_t -句柄的值
+
+
+
+
+
+压入消息队列
+void uboss_mq_push(struct message_queue *q, struct uboss_message *message);
+
+参数：
+	q - 消息队列的结构
+	message - 消息
+
+返回值：
+	void
+
+
+弹出消息队列
+int uboss_mq_pop(struct message_queue *q, struct uboss_message *message);
+
+参数：
+	q - 消息队列的结构
+	message - 消息
+
+返回值：
+	int
+
+
+获得消息队列的长度
+int uboss_mq_length(struct message_queue *q);
+
+参数：
+	q - 消息队列的结构
+
+返回值：
+	int
+
+
+
+重载消息队列
+int uboss_mq_overload(struct message_queue *q);
+
+参数：
+	q - 消息队列的结构
+
+返回值：
+	int
+
+
+
+
+

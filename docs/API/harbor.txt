@@ -1,0 +1,55 @@
+
+
+初始化群集
+void uboss_harbor_init(int harbor);
+
+参数：
+	harbor - 群集的编号
+
+返回值：
+	void
+
+
+
+启动群集
+void uboss_harbor_start(void * ctx);
+
+参数：
+	ctx - uboss上下文
+
+返回值：
+	void
+
+
+
+退出群集
+void uboss_harbor_exit();
+
+参数：
+
+返回值：
+
+
+
+判断是否为远程消息
+int uboss_harbor_message_isremote(uint32_t handle);
+
+参数：
+	handle - 句柄的值
+
+返回值：
+	int
+
+
+发送远程消息
+void uboss_harbor_send(struct remote_message *rmsg, uint32_t source, int session);
+
+参数：
+	rmsg     - 远程消息
+	source   - 来源地址
+	session  - 会话编号
+
+返回值：
+	void
+
+

@@ -1,0 +1,47 @@
+初始化定时器
+void uboss_timer_init(void);
+
+参数：
+	void
+
+返回值：
+	void
+
+
+
+开始时间
+uint32_t uboss_starttime(void);
+
+参数：
+	void
+
+返回值：
+	uint32_t 
+
+
+超时
+int uboss_timeout(uint32_t handle, int time, int session);
+
+参数：
+	handle - 句柄的值
+	time
+	session - 会话的编号
+
+返回值：
+	int
+
+
+更新时间
+void uboss_updatetime(void);
+
+参数：
+	void
+
+返回值：
+	void
+
+
+
+
+
+
