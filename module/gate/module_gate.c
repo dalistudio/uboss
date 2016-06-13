@@ -31,7 +31,7 @@ struct connection {
 	struct databuffer buffer; // 数据缓冲区
 };
 
-// gate的结构
+// 网关的结构
 struct gate {
 	struct uboss_context *ctx; // uboss上下文结构
 	int listen_id; // 监听ID
@@ -46,7 +46,7 @@ struct gate {
 	struct messagepool mp; // 消息池
 };
 
-// 创建 gate
+// 创建网关
 struct gate *
 gate_create(void) {
 	struct gate * g = uboss_malloc(sizeof(*g)); // 分配内存空间
@@ -55,7 +55,7 @@ gate_create(void) {
 	return g; // 返回 gate
 }
 
-// 释放 gate
+// 释放网关
 void
 gate_release(struct gate *g) {
 	int i;
@@ -77,7 +77,7 @@ gate_release(struct gate *g) {
 	uboss_free(g); // 释放结构
 }
 
-// 参数
+// 处理参数
 static void
 _parm(char *msg, int sz, int command_sz) {
 	// 当长度大于命令长度时，在命令尾插入空格符
@@ -95,7 +95,7 @@ _parm(char *msg, int sz, int command_sz) {
 	msg[i-command_sz] = '\0'; // 结束
 }
 
-// 转寄代理
+// 转发代理
 static void
 _forward_agent(struct gate * g, int fd, uint32_t agentaddr, uint32_t clientaddr) {
 	// 查找散列的ID
@@ -135,7 +135,7 @@ _ctrl(struct gate * g, const void * msg, int sz) {
 		return;
 	}
 
-	// 转寄
+	// 转发
 	if (memcmp(command,"forward",i)==0) {
 		_parm(tmp, sz, i); // 处理参数
 		char * client = tmp;
@@ -200,7 +200,7 @@ _report(struct gate * g, const char * data, ...) {
 	uboss_send(ctx, 0, g->watchdog, PTYPE_TEXT,  0, tmp, n);
 }
 
-// 转寄
+// 转发
 static void
 _forward(struct gate *g, struct connection * c, int size) {
 	struct uboss_context * ctx = g->ctx;
@@ -391,7 +391,7 @@ start_listen(struct gate *g, char * listen_addr) {
 	return 0;
 }
 
-// 初始化 gate
+// 初始化网关
 int
 gate_init(struct gate *g , struct uboss_context * ctx, char * parm) {
 	// 如果参数为空，返回错误
