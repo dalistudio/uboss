@@ -1,4 +1,14 @@
 /*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Harbor
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
+/*
  * 集群模块
  *
  * 主要判断发送的消息是否为远程，以及发送远程消息

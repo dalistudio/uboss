@@ -1,4 +1,14 @@
 /*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Timer
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
+/*
  * 定时器模块
  *
  * 提供定时器事件链表，管理定时器，并到期调用回调函数

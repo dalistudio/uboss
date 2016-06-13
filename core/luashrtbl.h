@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Lua Shared Table
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #ifndef LUA_SHORT_STRING_TABLE_H
 #define LUA_SHORT_STRING_TABLE_H
 

@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Socket kqueue
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #ifndef poll_socket_kqueue_h
 #define poll_socket_kqueue_h
 

@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Socket Server
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #ifndef uboss_socket_server_h
 #define uboss_socket_server_h
 

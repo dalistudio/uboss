@@ -1,4 +1,14 @@
 /*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A lightweight micro service framework
+**
+** uBoss Log
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
+/*
  * 日志模块
  *
  * 如果开启，可记录日志到文件或网络中
