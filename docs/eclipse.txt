@@ -1,0 +1,28 @@
+ubuntu 16.04 运行 Eclipse Mars.2 Release (4.5.2) 时有问题，主要时 Eclipse 调用 GTK3的问题。
+主要体现在进入系统属性没有办法切换属性页，或很慢。
+
+可以通过一下两个步骤解决：
+1、打开 eclipse.ini 文件
+   在 --launcher.library 上面加上
+   --launcher.GTK_version
+   2
+
+   指定以GTK2来启动就行了，注意上面的 2 也需要添加。
+   
+ 2、创建 Eclipse 图标
+    进入 cd /usr/share/applications 目录
+    创建 eclipse.desktop 文件
+    添加内容：
+    
+[Desktop Entry]
+Encoding=UTF-8
+Name=Eclipse Platfrom
+Comment=Eclipse IDE
+Exec=env SWT_GTK3=0 /home/dali/eclipse/eclipse
+Icon=/home/dali/eclipse/icon.xpm
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=Application;Development;
+    
+    更改以上目录，主要修改在 Exec= 后妈添加 env SWT_GTK3=0 
