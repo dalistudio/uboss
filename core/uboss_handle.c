@@ -88,6 +88,10 @@ uboss_handle_register(struct uboss_context *ctx) {
 		s->slot = new_slot; // 替换成新槽的地址
 		s->slot_size *= 2; // 修改槽的大小为原来的2倍
 	}
+
+	// 只有意外的情况下才会执行到这里。
+	// 注意：没有返回值，最好返回0，但可能会重复
+	return 0;
 }
 
 // 收回句柄
