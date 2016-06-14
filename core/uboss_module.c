@@ -45,29 +45,34 @@ _try_open(struct modules *m, const char * name) {
 	//search path
 	void * dl = NULL;
 	char tmp[sz]; // 临时字符串
+
+	// 循环每个路径，尝试打开 name 的模块
 	do
 	{
 		memset(tmp,0,sz); // 字符串清零
-		while (*path == ';') path++; // 循环找到 分号
-		if (*path == '\0') break; // 如果遇到 0 则结束
-		l = strchr(path, ';'); // 查找 分号
+		while (*path == ';') path++; // 遇到 ';' 则循环过滤掉所有分号
+		if (*path == '\0') break; // 如果遇到 \0 则结束循环
+		l = strchr(path, ';'); // 查找 分号 的位置
 		if (l == NULL) l = path + strlen(path);
-		int len = l - path;
+		int len = l - path; // 计算下一个 ';' 到现在 path 的字符数
 		int i;
+
+		// 循环把不等于 '?' 的字符复制到临时数组
 		for (i=0;path[i]!='?' && i < len ;i++) {
 			tmp[i] = path[i];
 		}
 		memcpy(tmp+i,name,name_size); // 复制 文件名到路径后面
 		if (path[i] == '?') {
-			strncpy(tmp+i+name_size,path+i+1,len - i - 1);
+			strncpy(tmp+i+name_size,path+i+1,len - i - 1); // 加上 '?' 后面和 ';' 前面的字符
 		} else {
-			fprintf(stderr,"Invalid C service path\n");
+			fprintf(stderr,"Invalid Module path\n");
 			exit(1);
 		}
 		dl = dlopen(tmp, RTLD_NOW | RTLD_GLOBAL); // 尝试打开 动态链接库
-		path = l;
+		path = l; // 把新地址赋给 path
 	}while(dl == NULL);
 
+	// 如果指针为空，表示打开所有路径下的 name 模块失败
 	if (dl == NULL) {
 		fprintf(stderr, "try open %s failed : %s\n",name,dlerror());
 	}
@@ -115,7 +120,7 @@ uboss_module_query(const char * name) {
 	// 如果结构为空，则锁住模块数组，准备尝试再打开模块。
 	SPIN_LOCK(M) // 锁住
 
-	// 再次尝试查找模块是否存在，不存在则尝试打开。
+	// 锁组数组后，再次尝试查找模块是否存在，不存在则尝试打开。
 	result = _query(name); // double check
 
 	// 如果结果为空，且总数小于最大模块数
@@ -124,11 +129,11 @@ uboss_module_query(const char * name) {
 		void * dl = _try_open(M,name); // 尝试打开模块
 		if (dl) {
 			M->m[index].name = name; // 模块名
-			M->m[index].module = dl; // 模块指针
+			M->m[index].module = dl; // 模块指针，给 dlsym() 函数使用
 
 			// 打开模块的函数
 			if (_open_sym(&M->m[index]) == 0) {
-				M->m[index].name = uboss_strdup(name);
+				M->m[index].name = uboss_strdup(name); // 复制一份字符串
 				M->count ++; // 模块数加一
 				result = &M->m[index]; // 获得模块的结构
 			}
@@ -158,7 +163,7 @@ uboss_module_insert(struct uboss_module *mod) {
 void * 
 uboss_module_instance_create(struct uboss_module *m) {
 	if (m->create) { // 如果创建函数存在
-		return m->create(); // 返回创建函数的指针
+		return m->create(); // 返回调用模块中的创建函数
 	} else {
 		return (void *)(intptr_t)(~0); // 返回空指针
 	}
@@ -167,14 +172,14 @@ uboss_module_instance_create(struct uboss_module *m) {
 // 从模块中获取实例化的初始化函数指针
 int
 uboss_module_instance_init(struct uboss_module *m, void * inst, struct uboss_context *ctx, const char * parm) {
-	return m->init(inst, ctx, parm); // 返回初始化函数的指针
+	return m->init(inst, ctx, parm); // 返回调用模块中的初始化函数
 }
 
 // 从模块中获取实例化的释放函数指针
 void 
 uboss_module_instance_release(struct uboss_module *m, void *inst) {
 	if (m->release) { // 如果释放函数存在
-		m->release(inst); // 返回释放函数的指针
+		m->release(inst); // 返回调用模块中的释放函数
 	}
 }
 
@@ -182,7 +187,7 @@ uboss_module_instance_release(struct uboss_module *m, void *inst) {
 void
 uboss_module_instance_signal(struct uboss_module *m, void *inst, int signal) {
 	if (m->signal) { // 如果信号函数存在
-		m->signal(inst, signal); // 返回信号函数的指针
+		m->signal(inst, signal); // 返回调用模块中的信号函数
 	}
 }
 
