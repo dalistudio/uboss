@@ -30,7 +30,7 @@
 #include <stdbool.h>
 
 
-
+// 节点总数
 int 
 uboss_context_total() {
 	return G_NODE.total;
@@ -60,8 +60,7 @@ uboss_current_handle(void) {
 	}
 }
 
-
-
+//
 struct drop_t {
 	uint32_t handle;
 };
@@ -460,7 +459,7 @@ uboss_context_send(struct uboss_context * ctx, void * msg, size_t sz, uint32_t s
 	uboss_mq_push(ctx->queue, &smsg); // 将消息压入消息队列
 }
 
-// 全局初始化
+// 全局线程管道初始化
 void 
 uboss_globalinit(void) {
 	G_NODE.total = 0;
@@ -474,13 +473,13 @@ uboss_globalinit(void) {
 	uboss_initthread(THREAD_MAIN); // 初始化主线程
 }
 
-// 
+// 退出全局线程管道
 void 
 uboss_globalexit(void) {
 	pthread_key_delete(G_NODE.handle_key);
 }
 
-// 初始化线程
+// 初始化线程管道
 void
 uboss_initthread(int m) {
 	uintptr_t v = (uint32_t)(-m);

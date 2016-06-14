@@ -51,7 +51,7 @@ static void
 create_thread(pthread_t *thread, void *(*start_routine) (void *), void *arg) {
 	if (pthread_create(thread,NULL, start_routine, arg)) {
 		fprintf(stderr, "Create thread failed");
-		exit(1);
+		exit(1); // 退出
 	}
 }
 

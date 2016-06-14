@@ -36,7 +36,7 @@ struct gate {
 	struct uboss_context *ctx; // uboss上下文结构
 	int listen_id; // 监听ID
 	uint32_t watchdog; // 看门狗
-	uint32_t broker; // 经纪人
+	uint32_t broker; // 经纪人（处理不同连接上的所有数据）
 	int client_tag; // 客户端标志
 	int header_size; // 头部大小
 	int max_connection; // 最大连接数
@@ -154,7 +154,7 @@ _ctrl(struct gate * g, const void * msg, int sz) {
 		return;
 	}
 
-	// 
+	// 经纪人模式
 	if (memcmp(command,"broker",i)==0) {
 		_parm(tmp, sz, i); // 处理参数
 		g->broker = uboss_queryname(ctx, command); // 按服务名查找
@@ -204,6 +204,7 @@ _report(struct gate * g, const char * data, ...) {
 static void
 _forward(struct gate *g, struct connection * c, int size) {
 	struct uboss_context * ctx = g->ctx;
+	// 发送给经纪人
 	if (g->broker) {
 		void * temp = uboss_malloc(size); // 分配内存空间
 		databuffer_read(&c->buffer,&g->mp,temp, size); // 从数据缓冲区读取数据到临时空间
@@ -212,13 +213,14 @@ _forward(struct gate *g, struct connection * c, int size) {
 		uboss_send(ctx, 0, g->broker, g->client_tag | PTYPE_TAG_DONTCOPY, 0, temp, size); 
 		return;
 	}
+	// 发送给客户的代理
 	if (c->agent) {
 		void * temp = uboss_malloc(size); // 分配内存空间
 		databuffer_read(&c->buffer,&g->mp,temp, size); // 从数据缓冲区读取数据到临时空间
 
 		// 发送uboss消息
 		uboss_send(ctx, c->client, c->agent, g->client_tag | PTYPE_TAG_DONTCOPY, 0 , temp, size);
-	} else if (g->watchdog) {
+	} else if (g->watchdog) { // 发送给看门狗
 		char * tmp = uboss_malloc(size + 32); // 分配内存空间
 		int n = snprintf(tmp,32,"%d data ",c->id);
 		databuffer_read(&c->buffer,&g->mp,tmp+n,size); // 从数据缓冲区读取数据到临时空间
@@ -368,20 +370,22 @@ start_listen(struct gate *g, char * listen_addr) {
 	char * portstr = strchr(listen_addr,':'); // 在监听地址中查找 ':' 字符
 	const char * host = "";
 	int port;
+	// 如果找不到':'，则将整个地址转成端口
 	if (portstr == NULL) {
 		port = strtol(listen_addr, NULL, 10); // 获得监听的端口
+		// 判断端口是否小于等于零
 		if (port <= 0) {
 			uboss_error(ctx, "Invalid gate address %s",listen_addr);
 			return 1;
 		}
-	} else {
+	} else { // 否则，单独转换端口
 		port = strtol(portstr + 1, NULL, 10); // 获得监听的端口
 		if (port <= 0) {
 			uboss_error(ctx, "Invalid gate address %s",listen_addr);
 			return 1;
 		}
-		portstr[0] = '\0';
-		host = listen_addr; // // 获得监听的 IP 地址
+		portstr[0] = '\0'; // 将 ':' 替换成 \0 截断字符串
+		host = listen_addr; // 获得监听的 IP 地址
 	}
 	g->listen_id = uboss_socket_listen(ctx, host, port, BACKLOG); // 监听 socket （积压模式）
 	if (g->listen_id < 0) {
@@ -401,7 +405,7 @@ gate_init(struct gate *g , struct uboss_context * ctx, char * parm) {
 	int max = 0;
 	int sz = strlen(parm)+1; // 获得参数字符串的长度
 	char watchdog[sz]; // 看门狗
-	char binding[sz]; // 绑定
+	char binding[sz]; // 绑定监听IP:Port
 	int client_tag = 0; // 客户端标志
 	char header; // 头部
 
