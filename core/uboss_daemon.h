@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A lightweight micro service framework
+** uBoss - A Lightweight MicroService Framework
 **
 ** uBoss Daemon
 **
@@ -8,11 +8,6 @@
 ** See Copyright Notice in uboss.h
 */
 
-/*
- * 守护模块
- *
- * 
-*/
 #ifndef UBOSS_DAEMON_H
 #define UBOSS_DAEMON_H
 

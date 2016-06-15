@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A lightweight micro service framework
+** uBoss - A Lightweight MicroService Framework
 **
 ** uBoss Main Function
 **
@@ -22,9 +22,7 @@
 #define PTYPE_SYSTEM 4 // 系统类型
 #define PTYPE_HARBOR 5 // 集群类型
 #define PTYPE_SOCKET 6 // 网络类型
-// read lualib/uboss.lua examples/simplemonitor.lua
 #define PTYPE_ERROR 7 // 错误类型
-// read lualib/uboss.lua lualib/mqueue.lua lualib/snax.lua
 #define PTYPE_RESERVED_QUEUE 8 // 队列保留类型
 #define PTYPE_RESERVED_DEBUG 9 // 调试保留类型
 #define PTYPE_RESERVED_LUA 10 // Lua保留类型

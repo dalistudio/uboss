@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A lightweight micro service framework
+** uBoss - A Lightweight MicroService Framework
 **
 ** uBoss Message Queue
 **
@@ -22,8 +22,8 @@
 #define DEFAULT_QUEUE_SIZE 64 // 默认队列大小
 #define MAX_GLOBAL_MQ 0x10000 // 全局消息队列最大值
 
-// 0 表示消息队列不在全局队列中 means mq is not in global mq.
-// 1 表示消息队列在全局队列中，或者消息在调度中 means mq is in global mq , or the message is dispatching.
+// 0 表示消息队列不在全局队列中
+// 1 表示消息队列在全局队列中，或者消息在调度中
 
 #define MQ_IN_GLOBAL 1
 #define MQ_OVERLOAD 1024
