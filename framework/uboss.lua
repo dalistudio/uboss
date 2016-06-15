@@ -6,7 +6,6 @@ local assert = assert
 local pairs = pairs
 local pcall = pcall
 
--- 性能剖析库
 local profile = require "profile"
 
 local coroutine_resume = profile.resume
@@ -15,24 +14,23 @@ local coroutine_yield = profile.yield
 local proto = {}
 local uboss = {
 	-- read uboss.h
-	PTYPE_TEXT = 0, -- 文本类型
-	PTYPE_RESPONSE = 1, -- 响应类型
-	PTYPE_MULTICAST = 2, -- 组播类型
-	PTYPE_CLIENT = 3, -- 客户端类型
-	PTYPE_SYSTEM = 4, -- 系统类型
-	PTYPE_HARBOR = 5, -- 群集类型
-	PTYPE_SOCKET = 6, -- 网络类型
-	PTYPE_ERROR = 7, -- 错误类型
-	PTYPE_QUEUE = 8,	-- 队列类型 used in deprecated mqueue, use uboss.queue instead
-	PTYPE_DEBUG = 9, -- 调试类型
-	PTYPE_LUA = 10, -- LUA类型
-	PTYPE_SNAX = 11, -- SNAX 类型
+	PTYPE_TEXT = 0,
+	PTYPE_RESPONSE = 1,
+	PTYPE_MULTICAST = 2,
+	PTYPE_CLIENT = 3,
+	PTYPE_SYSTEM = 4,
+	PTYPE_HARBOR = 5,
+	PTYPE_SOCKET = 6,
+	PTYPE_ERROR = 7,
+	PTYPE_QUEUE = 8,	-- used in deprecated mqueue, use uboss.queue instead
+	PTYPE_DEBUG = 9,
+	PTYPE_LUA = 10,
+	PTYPE_SNAX = 11,
 }
 
--- 代码缓冲 code cache
+-- code cache
 uboss.cache = require "uboss.codecache"
 
--- 注册协议
 function uboss.register_protocol(class)
 	local name = class.name
 	local id = class.id
@@ -60,14 +58,12 @@ local fork_queue = {}
 -- suspend is function
 local suspend
 
--- 字符串转句柄
 local function string_to_handle(str)
 	return tonumber("0x" .. string.sub(str , 2))
 end
 
 ----- monitor exit
 
--- 调度错误队列
 local function dispatch_error_queue()
 	local session = table.remove(error_queue,1)
 	if session then
@@ -77,7 +73,6 @@ local function dispatch_error_queue()
 	end
 end
 
--- 错误调度
 local function _error_dispatch(error_session, error_source)
 	if error_session == 0 then
 		-- service is down
@@ -100,10 +95,8 @@ end
 
 -- coroutine reuse
 
---协程池
-local coroutine_pool = {}
+local coroutine_pool = setmetatable({}, { __mode = "kv" })
 
--- 创建协程
 local function co_create(f)
 	local co = table.remove(coroutine_pool)
 	if co == nil then
@@ -122,7 +115,6 @@ local function co_create(f)
 	return co
 end
 
--- 调度唤醒
 local function dispatch_wakeup()
 	local co = next(wakeup_session)
 	if co then
@@ -135,7 +127,6 @@ local function dispatch_wakeup()
 	end
 end
 
--- 释放观察
 local function release_watching(address)
 	local ref = watching_service[address]
 	if ref then
@@ -149,7 +140,6 @@ local function release_watching(address)
 end
 
 -- suspend is local function
--- 暂停
 function suspend(co, result, command, param, size)
 	if not result then
 		local session = session_coroutine_id[co]
@@ -260,7 +250,6 @@ function suspend(co, result, command, param, size)
 	dispatch_error_queue()
 end
 
--- 超时
 function uboss.timeout(ti, func)
 	local session = c.intcommand("TIMEOUT",ti)
 	assert(session)
@@ -269,7 +258,6 @@ function uboss.timeout(ti, func)
 	session_id_coroutine[session] = co
 end
 
--- 休眠
 function uboss.sleep(ti)
 	local session = c.intcommand("TIMEOUT",ti)
 	assert(session)
@@ -285,12 +273,10 @@ function uboss.sleep(ti)
 	end
 end
 
---
 function uboss.yield()
 	return uboss.sleep(0)
 end
 
--- 等待
 function uboss.wait(co)
 	local session = c.genid()
 	local ret, msg = coroutine_yield("SLEEP", session)
@@ -300,8 +286,6 @@ function uboss.wait(co)
 end
 
 local self_handle
-
--- 自己
 function uboss.self()
 	if self_handle then
 		return self_handle
@@ -310,7 +294,6 @@ function uboss.self()
 	return self_handle
 end
 
--- 本地名字
 function uboss.localname(name)
 	local addr = c.command("QUERY", name)
 	if addr then
@@ -322,7 +305,6 @@ uboss.now = c.now
 
 local starttime
 
--- 开始时间
 function uboss.starttime()
 	if not starttime then
 		starttime = c.intcommand("STARTTIME")
@@ -330,12 +312,10 @@ function uboss.starttime()
 	return starttime
 end
 
--- 获得时间
 function uboss.time()
 	return uboss.now()/100 + (starttime or uboss.starttime())
 end
 
--- 退出
 function uboss.exit()
 	fork_queue = {}	-- no fork coroutine can be execute after uboss.exit
 	uboss.send(".launcher","lua","REMOVE",uboss.self(), false)
@@ -362,23 +342,19 @@ function uboss.exit()
 	coroutine_yield "QUIT"
 end
 
--- 获得环境变量
 function uboss.getenv(key)
 	return (c.command("GETENV",key))
 end
 
--- 设置环境变量
 function uboss.setenv(key, value)
 	c.command("SETENV",key .. " " ..value)
 end
 
--- 发送消息
 function uboss.send(addr, typename, ...)
 	local p = proto[typename]
 	return c.send(addr, p.id, 0 , p.pack(...))
 end
 
--- 生成ID 
 uboss.genid = assert(c.genid)
 
 uboss.redirect = function(dest,source,typename,...)
@@ -421,7 +397,6 @@ function uboss.ret(msg, sz)
 	return coroutine_yield("RETURN", msg, sz)
 end
 
--- 响应
 function uboss.response(pack)
 	pack = pack or uboss.pack
 	return coroutine_yield("RESPONSE", pack)
@@ -431,7 +406,6 @@ function uboss.retpack(...)
 	return uboss.ret(uboss.pack(...))
 end
 
--- 唤醒
 function uboss.wakeup(co)
 	if sleep_session[co] and wakeup_session[co] == nil then
 		wakeup_session[co] = true
@@ -439,7 +413,6 @@ function uboss.wakeup(co)
 	end
 end
 
--- 调度
 function uboss.dispatch(typename, func)
 	local p = proto[typename]
 	if func then
@@ -451,26 +424,22 @@ function uboss.dispatch(typename, func)
 	end
 end
 
--- 未知请求
 local function unknown_request(session, address, msg, sz, prototype)
 	uboss.error(string.format("Unknown request (%s): %s", prototype, c.tostring(msg,sz)))
 	error(string.format("Unknown session : %d from %x", session, address))
 end
 
--- 调度未知请求
 function uboss.dispatch_unknown_request(unknown)
 	local prev = unknown_request
 	unknown_request = unknown
 	return prev
 end
 
--- 未知响应
 local function unknown_response(session, address, msg, sz)
 	uboss.error(string.format("Response message : %s" , c.tostring(msg,sz)))
 	error(string.format("Unknown session : %d from %x", session, address))
 end
 
--- 调度未知响应
 function uboss.dispatch_unknown_response(unknown)
 	local prev = unknown_response
 	unknown_response = unknown
@@ -486,7 +455,6 @@ function uboss.fork(func,...)
 	return co
 end
 
--- 调度 raw 消息
 local function raw_dispatch_message(prototype, msg, sz, session, source)
 	-- uboss.PTYPE_RESPONSE = 1, read uboss.h
 	if prototype == 1 then
@@ -527,7 +495,6 @@ local function raw_dispatch_message(prototype, msg, sz, session, source)
 	end
 end
 
--- 调度消息
 function uboss.dispatch_message(...)
 	local succ, err = pcall(raw_dispatch_message,...)
 	while true do
@@ -549,12 +516,10 @@ function uboss.dispatch_message(...)
 	assert(succ, tostring(err))
 end
 
--- 新服务
 function uboss.newservice(name, ...)
-	return uboss.call(".launcher", "lua" , "LAUNCH", "snlua", name, ...)
+	return uboss.call(".launcher", "lua" , "LAUNCH", "luavm", name, ...)
 end
 
--- 惟一的服务
 function uboss.uniqueservice(global, ...)
 	if global == true then
 		return assert(uboss.call(".service", "lua", "GLAUNCH", ...))
@@ -563,7 +528,6 @@ function uboss.uniqueservice(global, ...)
 	end
 end
 
--- 查询服务
 function uboss.queryservice(global, ...)
 	if global == true then
 		return assert(uboss.call(".service", "lua", "GQUERY", ...))
@@ -572,7 +536,6 @@ function uboss.queryservice(global, ...)
 	end
 end
 
--- 地址
 function uboss.address(addr)
 	if type(addr) == "number" then
 		return string.format(":%08x",addr)
@@ -581,7 +544,6 @@ function uboss.address(addr)
 	end
 end
 
--- 群集地址
 function uboss.harbor(addr)
 	return c.harbor(addr)
 end
@@ -614,7 +576,6 @@ end
 
 local init_func = {}
 
--- 初始化
 function uboss.init(f, name)
 	assert(type(f) == "function")
 	if init_func == nil then
@@ -629,7 +590,6 @@ function uboss.init(f, name)
 	end
 end
 
--- 初始化所有
 local function init_all()
 	local funcs = init_func
 	init_func = nil
@@ -645,7 +605,6 @@ local function ret(f, ...)
 	return ...
 end
 
--- 初始化模板
 local function init_template(start, ...)
 	init_all()
 	init_func = {}
@@ -656,7 +615,6 @@ function uboss.pcall(start, ...)
 	return xpcall(init_template, debug.traceback, start, ...)
 end
 
--- 初始化服务
 function uboss.init_service(start)
 	local ok, err = uboss.pcall(start)
 	if not ok then
@@ -668,7 +626,6 @@ function uboss.init_service(start)
 	end
 end
 
--- 启动
 function uboss.start(start_func)
 	c.callback(uboss.dispatch_message)
 	uboss.timeout(0, function()
@@ -676,17 +633,14 @@ function uboss.start(start_func)
 	end)
 end
 
--- 终止
 function uboss.endless()
 	return c.command("ENDLESS")~=nil
 end
 
--- 消息队列的长度
 function uboss.mqlen()
 	return c.intcommand "MQLEN"
 end
 
--- 任务
 function uboss.task(ret)
 	local t = 0
 	for session,co in pairs(session_id_coroutine) do
@@ -707,15 +661,10 @@ function uboss.memlimit(bytes)
 	uboss.memlimit = nil	-- set only once
 end
 
-local function clear_pool()
-	coroutine_pool = {}
-end
-
--- 注入内部调试框架 Inject internal debug framework
+-- Inject internal debug framework
 local debug = require "uboss.debug"
-debug(uboss, {
+debug.init(uboss, {
 	dispatch = uboss.dispatch_message,
-	clear = clear_pool,
 	suspend = suspend,
 })
 

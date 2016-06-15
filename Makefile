@@ -69,7 +69,9 @@ update3rd :
 MODULE = luavm logger harbor monitor gate
 
 # Lua 的库
-LUA_CLIB = uboss socket profile
+LUA_CLIB = uboss socketdriver profile netpack stm bson crypt clientsocket \
+  memory multicast mongo mysqlaux sharedata debugchannel sproto cluster \
+  md5 lpeg
 
 # uBoss 核心
 UBOSS_CORE = uboss.c uboss_handle.c uboss_module.c uboss_mq.c \
@@ -107,13 +109,56 @@ $(foreach v, $(MODULE), $(eval $(call MODULE_TEMP,$(v))))
 $(LUA_LIB_PATH)/uboss.so : lib/uboss/lua-uboss.c lib/uboss/lua-seri.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
 
-$(LUA_LIB_PATH)/socket.so : lib/socket/lua-socket.c | $(LUA_LIB_PATH)
+$(LUA_LIB_PATH)/socketdriver.so : lib/socket/lua-socket.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule
 
 $(LUA_LIB_PATH)/profile.so : lib/profile/lua-profile.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ 
 
+$(LUA_LIB_PATH)/netpack.so : lib/netpack/lua-netpack.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
 
+$(LUA_LIB_PATH)/stm.so : lib/stm/lua-stm.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+
+$(LUA_LIB_PATH)/bson.so : lib/bson/lua-bson.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+
+$(LUA_LIB_PATH)/crypt.so : lib/crypt/lua-crypt.c lib/crypt/lsha1.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+$(LUA_LIB_PATH)/cluster.so : lib/cluster/lua-cluster.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+
+$(LUA_LIB_PATH)/clientsocket.so : lib/clientsocket/lua-clientsocket.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+$(LUA_LIB_PATH)/memory.so : lib/memory/lua-memory.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+
+$(LUA_LIB_PATH)/multicast.so : lib/multicast/lua-multicast.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+
+$(LUA_LIB_PATH)/mongo.so : lib/mongo/lua-mongo.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+
+$(LUA_LIB_PATH)/mysqlaux.so : lib/mysqlaux/lua-mysqlaux.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+$(LUA_LIB_PATH)/sharedata.so : lib/sharedata/lua-sharedata.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+
+$(LUA_LIB_PATH)/debugchannel.so : lib/debugchannel/lua-debugchannel.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+
+$(LUA_LIB_PATH)/sproto.so : lib/sproto/sproto.c lib/sproto/lsproto.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/sproto
+
+$(LUA_LIB_PATH)/md5.so : lib/md5/md5.c lib/md5/md5lib.c lib/md5/compat-5.2.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/md5
+
+$(LUA_LIB_PATH)/lpeg.so : lib/lpeg/lpcap.c lib/lpeg/lpcode.c lib/lpeg/lpprint.c lib/lpeg/lptree.c lib/lpeg/lpvm.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/lpeg 
 
 ###
 # 清理项目

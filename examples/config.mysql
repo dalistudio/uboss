@@ -1,0 +1,11 @@
+root = "./"
+thread = 8
+logger = nil
+harbor = 0
+start = "main_mysql"	-- main script
+bootstrap = "luavm bootstrap"	-- The service for bootstrap
+lua_service = root.."service/?.lua;"..root.."test/?.lua;"..root.."examples/?.lua;"..root.."framework/?.lua"
+lua_loader = "framework/loader.lua"
+snax = root.."examples/?.lua;"..root.."test/?.lua"
+module = root.."module/?.so"
+-- daemon = "./uboss.pid"

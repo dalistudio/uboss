@@ -684,7 +684,7 @@ ludp_address(lua_State *L) {
 }
 
 int
-luaopen_socket(lua_State *L) {
+luaopen_socketdriver(lua_State *L) {
 	luaL_checkversion(L);
 	luaL_Reg l[] = {
 		{ "buffer", lnewbuffer },

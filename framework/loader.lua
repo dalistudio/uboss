@@ -26,7 +26,7 @@ end
 
 LUA_SERVICE = nil
 package.path , LUA_PATH = LUA_PATH
-package.cpath , LUA_CPATH = LUA_CPATH
+package.cpath , LUA_LIB = LUA_LIB
 
 local service_path = string.match(pattern, "(.*/)[^/?]+$")
 

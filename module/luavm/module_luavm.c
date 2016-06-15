@@ -98,7 +98,7 @@ _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) 
 	lua_pop(L,1); // 弹出
 
 	// 设置变量
-	const char *path = optstring(ctx, "lua_path","./service/?.lua;./service/?/init.lua"); // lua脚本的路径
+	const char *path = optstring(ctx, "lua_path","./framework/?.lua;./framework/?/init.lua"); // lua脚本的路径
 	lua_pushstring(L, path);
 	lua_setglobal(L, "LUA_PATH");
 	const char *cpath = optstring(ctx, "lua_lib","./lib/?.so"); // lua库的路径
@@ -114,7 +114,7 @@ _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) 
 	lua_pushcfunction(L, traceback); // 追踪
 	assert(lua_gettop(L) == 1);
 
-	const char * loader = optstring(ctx, "lua_loader", "./service/loader.lua"); // lua的加载器脚本名字
+	const char * loader = optstring(ctx, "lua_loader", "./framework/loader.lua"); // lua的加载器脚本名字
 
 	// 执行加载器脚本
 	int r = luaL_loadfile(L,loader); // 执行所有 lua 脚本，都必须要用 loader 加载器
