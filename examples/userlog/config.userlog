@@ -11,5 +11,5 @@ lua_loader = "framework/loader.lua"
 -- preload = "./examples/preload.lua"	-- run preload.lua before every lua service run
 snax = root.."examples/?.lua;"..root.."test/?.lua"
 -- snax_interface_g = "snax_g"
-cpath = root.."cservice/?.so"
+module = root.."module/?.so"
 -- daemon = "./uboss.pid"

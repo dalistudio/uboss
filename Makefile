@@ -131,7 +131,7 @@ $(LUA_LIB_PATH)/cluster.so : lib/cluster/lua-cluster.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
 
 $(LUA_LIB_PATH)/clientsocket.so : lib/clientsocket/lua-clientsocket.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread
 
 $(LUA_LIB_PATH)/memory.so : lib/memory/lua-memory.c | $(LUA_LIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
