@@ -1,5 +1,5 @@
 /*
-** $Id: lauxlib.c,v 1.284 2015/11/19 19:16:22 roberto Exp $
+** $Id: lauxlib.c,v 1.286 2016/01/08 15:33:09 roberto Exp $
 ** Auxiliary functions for building Lua libraries
 ** See Copyright Notice in lua.h
 */
@@ -17,7 +17,8 @@
 #include <string.h>
 
 
-/* This file uses only the official API of Lua.
+/*
+** This file uses only the official API of Lua.
 ** Any function declared here could be written as an application function.
 */
 
@@ -198,6 +199,10 @@ static void tag_error (lua_State *L, int arg, int tag) {
 }
 
 
+/*
+** The use of 'lua_pushfstring' ensures this function does not
+** need reserved stack space when called.
+*/
 LUALIB_API void luaL_where (lua_State *L, int level) {
   lua_Debug ar;
   if (lua_getstack(L, level, &ar)) {  /* check function at level */
@@ -207,10 +212,15 @@ LUALIB_API void luaL_where (lua_State *L, int level) {
       return;
     }
   }
-  lua_pushliteral(L, "");  /* else, no information available... */
+  lua_pushfstring(L, "");  /* else, no information available... */
 }
 
 
+/*
+** Again, the use of 'lua_pushvfstring' ensures this function does
+** not need reserved stack space when called. (At worst, it generates
+** an error with "stack overflow" instead of the given message.)
+*/
 LUALIB_API int luaL_error (lua_State *L, const char *fmt, ...) {
   va_list argp;
   va_start(argp, fmt);
@@ -349,10 +359,15 @@ LUALIB_API int luaL_checkoption (lua_State *L, int arg, const char *def,
 }
 
 
+/*
+** Ensures the stack has at least 'space' extra slots, raising an error
+** if it cannot fulfill the request. (The error handling needs a few
+** extra slots to format the error message. In case of an error without
+** this extra space, Lua will generate the same 'stack overflow' error,
+** but without 'msg'.)
+*/
 LUALIB_API void luaL_checkstack (lua_State *L, int space, const char *msg) {
-  /* keep some extra space to run error routines, if needed */
-  const int extra = LUA_MINSTACK;
-  if (!lua_checkstack(L, space + extra)) {
+  if (!lua_checkstack(L, space)) {
     if (msg)
       luaL_error(L, "stack overflow (%s)", msg);
     else
@@ -678,7 +693,7 @@ static int skipcomment (LoadF *lf, int *cp) {
   if (c == '#') {  /* first line is a comment (Unix exec. file)? */
     do {  /* skip first line */
       c = getc(lf->f);
-    } while (c != EOF && c != '\n') ;
+    } while (c != EOF && c != '\n');
     *cp = getc(lf->f);  /* skip end-of-line, if present */
     return 1;  /* there was a comment */
   }
@@ -686,7 +701,7 @@ static int skipcomment (LoadF *lf, int *cp) {
 }
 
 
-LUALIB_API int luaL_loadfilex (lua_State *L, const char *filename,
+static int luaL_loadfilex_ (lua_State *L, const char *filename,
                                              const char *mode) {
   LoadF lf;
   int status, readstatus;
@@ -1018,3 +1033,172 @@ LUALIB_API void luaL_checkversion_ (lua_State *L, lua_Number ver, size_t sz) {
                   ver, *v);
 }
 
+// use clonefunction
+
+#include "uboss_lock.h"
+
+struct codecache {
+	struct spinlock lock;
+	lua_State *L;
+};
+
+static struct codecache CC;
+
+static void
+clearcache() {
+	if (CC.L == NULL)
+		return;
+	SPIN_LOCK(&CC)
+		lua_close(CC.L);
+		CC.L = luaL_newstate();
+	SPIN_UNLOCK(&CC)
+}
+
+static void
+init() {
+	SPIN_INIT(&CC);
+	CC.L = luaL_newstate();
+}
+
+static const void *
+load(const char *key) {
+  if (CC.L == NULL)
+    return NULL;
+  SPIN_LOCK(&CC)
+    lua_State *L = CC.L;
+    lua_pushstring(L, key);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    const void * result = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+  SPIN_UNLOCK(&CC)
+
+  return result;
+}
+
+static const void *
+save(const char *key, const void * proto) {
+  lua_State *L;
+  const void * result = NULL;
+
+  SPIN_LOCK(&CC)
+    if (CC.L == NULL) {
+      init();
+      L = CC.L;
+    } else {
+      L = CC.L;
+      lua_pushstring(L, key);
+      lua_pushvalue(L, -1);
+      lua_rawget(L, LUA_REGISTRYINDEX);
+      result = lua_touserdata(L, -1); /* stack: key oldvalue */
+      if (result == NULL) {
+        lua_pop(L,1);
+        lua_pushlightuserdata(L, (void *)proto);
+        lua_rawset(L, LUA_REGISTRYINDEX);
+      } else {
+        lua_pop(L,2);
+      }
+    }
+  SPIN_UNLOCK(&CC)
+  return result;
+}
+
+#define CACHE_OFF 0
+#define CACHE_EXIST 1
+#define CACHE_ON 2
+
+static int cache_key = 0;
+
+static int cache_level(lua_State *L) {
+	int t = lua_rawgetp(L, LUA_REGISTRYINDEX, &cache_key);
+	int r = lua_tointeger(L, -1);
+	lua_pop(L,1);
+	if (t == LUA_TNUMBER) {
+		return r;
+	}
+	return CACHE_ON;
+}
+
+static int cache_mode(lua_State *L) {
+	static const char * lst[] = {
+		"OFF",
+		"EXIST",
+		"ON",
+		NULL,
+	};
+	if (lua_isnoneornil(L,1)) {
+		int t = lua_rawgetp(L, LUA_REGISTRYINDEX, &cache_key);
+		int r = lua_tointeger(L, -1);
+		if (t == LUA_TNUMBER) {
+			if (r < 0  || r >= CACHE_ON) {
+				r = CACHE_ON;
+			}
+		} else {
+			r = CACHE_ON;
+		}
+		lua_pushstring(L, lst[r]);
+		return 1;
+	}
+	int t = luaL_checkoption(L, 1, "OFF" , lst);
+	lua_pushinteger(L, t);
+	lua_rawsetp(L, LUA_REGISTRYINDEX, &cache_key);
+	return 0;
+}
+
+LUALIB_API int luaL_loadfilex (lua_State *L, const char *filename,
+                                             const char *mode) {
+  int level = cache_level(L);
+  if (level == CACHE_OFF) {
+    return luaL_loadfilex_(L, filename, mode);
+  }
+  const void * proto = load(filename);
+  if (proto) {
+    lua_clonefunction(L, proto);
+    return LUA_OK;
+  }
+  if (level == CACHE_EXIST) {
+    return luaL_loadfilex_(L, filename, mode);
+  }
+  lua_State * eL = luaL_newstate();
+  if (eL == NULL) {
+    lua_pushliteral(L, "New state failed");
+    return LUA_ERRMEM;
+  }
+  int err = luaL_loadfilex_(eL, filename, mode);
+  if (err != LUA_OK) {
+    size_t sz = 0;
+    const char * msg = lua_tolstring(eL, -1, &sz);
+    lua_pushlstring(L, msg, sz);
+    lua_close(eL);
+    return err;
+  }
+  proto = lua_topointer(eL, -1);
+  const void * oldv = save(filename, proto);
+  if (oldv) {
+    lua_close(eL);
+    lua_clonefunction(L, oldv);
+  } else {
+    lua_clonefunction(L, proto);
+    /* Never close it. notice: memory leak */
+  }
+
+  return LUA_OK;
+}
+
+static int
+cache_clear(lua_State *L) {
+	(void)(L);
+	clearcache();
+	return 0;
+}
+
+LUAMOD_API int luaopen_cache(lua_State *L) {
+	luaL_Reg l[] = {
+		{ "clear", cache_clear },
+		{ "mode", cache_mode },
+		{ NULL, NULL },
+	};
+	luaL_newlib(L,l);
+	lua_getglobal(L, "loadfile");
+	lua_setfield(L, -2, "loadfile");
+	return 1;
+}
