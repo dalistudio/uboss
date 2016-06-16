@@ -38,7 +38,7 @@ cleardummy(lua_State *L) {
   return 0;
 }
 
-// 代码缓冲
+// 定义 Lua 的 codecache 库
 static int 
 codecache(lua_State *L) {
 	luaL_Reg l[] = {
@@ -88,36 +88,43 @@ static int
 _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) {
 	lua_State *L = l->L; // 设置 luaVM 状态机的地址
 	l->ctx = ctx; // 设置 uBoss 上下文
-	lua_gc(L, LUA_GCSTOP, 0); // 设置回收机制的标志
-	lua_pushboolean(L, 1);  /* signal for libraries to ignore env. vars. */
-	lua_setfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
-	luaL_openlibs(L); // 打开 lua 标准库
-	lua_pushlightuserdata(L, ctx); // 压入用户数据
-	lua_setfield(L, LUA_REGISTRYINDEX, "uboss_context");
-	luaL_requiref(L, "uboss.codecache", codecache , 0);
-	lua_pop(L,1); // 弹出
+	lua_gc(L, LUA_GCSTOP, 0); // 设置 GC 停止
 
-	// 设置变量
+	lua_pushboolean(L, 1); // 压入布尔值1 /* signal for libraries to ignore env. vars. */
+	lua_setfield(L, LUA_REGISTRYINDEX, "LUA_NOENV"); // 设置表 LUA_REGISTRYINDEX 中 LUA_NOENV 字段
+
+	luaL_openlibs(L); // 打开 lua 标准库
+
+	lua_pushlightuserdata(L, ctx); // 压入用户数据
+	lua_setfield(L, LUA_REGISTRYINDEX, "uboss_context"); // 设置表 LUA_REGISTRYINDEX 中 uboss_context 字段
+
+	// 注册 Lua 的 codecache 库，名为：uboss.codecache
+	luaL_requiref(L, "uboss.codecache", codecache , 0);
+	lua_pop(L,1); // 弹出堆栈
+
+	// 设置全局变量
 	const char *path = optstring(ctx, "lua_path","./framework/?.lua;./framework/?/init.lua"); // lua脚本的路径
-	lua_pushstring(L, path);
-	lua_setglobal(L, "LUA_PATH");
+	lua_pushstring(L, path); // 压入框架脚本的路径字符串
+	lua_setglobal(L, "LUA_PATH"); // 设置为全局变量
 	const char *cpath = optstring(ctx, "lua_lib","./lib/?.so"); // lua库的路径
-	lua_pushstring(L, cpath);
-	lua_setglobal(L, "LUA_LIB");
+	lua_pushstring(L, cpath); // 压入 lua 库的路径字符串
+	lua_setglobal(L, "LUA_LIB"); // 设置为全局变量
 	const char *service = optstring(ctx, "lua_service", "./service/?.lua"); // lua服务的路径
-	lua_pushstring(L, service);
-	lua_setglobal(L, "LUA_SERVICE");
+	lua_pushstring(L, service); // 压入 lua 服务脚本的路径字符串
+	lua_setglobal(L, "LUA_SERVICE"); // 设置为全局变量
 	const char *preload = uboss_command(ctx, "GETENV", "preload"); // 预加载
-	lua_pushstring(L, preload);
-	lua_setglobal(L, "LUA_PRELOAD");
+	lua_pushstring(L, preload); // 压入 预加载脚本的路径字符串
+	lua_setglobal(L, "LUA_PRELOAD"); // 设置为全局变量
 
 	lua_pushcfunction(L, traceback); // 追踪
-	assert(lua_gettop(L) == 1);
+	assert(lua_gettop(L) == 1); // 断言获得堆栈顶 == 1
 
 	const char * loader = optstring(ctx, "lua_loader", "./framework/loader.lua"); // lua的加载器脚本名字
 
 	// 执行加载器脚本
 	int r = luaL_loadfile(L,loader); // 执行所有 lua 脚本，都必须要用 loader 加载器
+
+	// 加载脚本失败
 	if (r != LUA_OK) {
 		uboss_error(ctx, "Can't load %s : %s", loader, lua_tostring(L, -1));
 		_report_launcher_error(ctx);
@@ -129,14 +136,17 @@ _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) 
 
 	// 执行函数
 	r = lua_pcall(L,1,0,1); // 执行 loader 加载器
+
+	// 执行脚本失败
 	if (r != LUA_OK) {
 		uboss_error(ctx, "lua loader error : %s", lua_tostring(L, -1));
 		_report_launcher_error(ctx);
 		return 1;
 	}
-	lua_settop(L,0);
 
-	lua_gc(L, LUA_GCRESTART, 0);
+	lua_settop(L,0); // 设置 堆栈的顶为0
+
+	lua_gc(L, LUA_GCRESTART, 0); // 重启 GC 
 
 	return 0;
 }
@@ -145,8 +155,8 @@ _init(struct luavm *l, struct uboss_context *ctx, const char * args, size_t sz) 
 static int
 _launch(struct uboss_context * context, void *ud, int type, int session, uint32_t source , const void * msg, size_t sz) {
 	assert(type == 0 && session == 0); // 断言
-	struct luavm *l = ud; // 结构地址
-	uboss_callback(context, NULL, NULL); // 设置回调函数
+	struct luavm *l = ud; // 用户数据指针
+	uboss_callback(context, NULL, NULL); // 清空指定context的回调函数设置
 	int err = _init(l, context, msg, sz); // 初始化
 	if (err) {
 		uboss_command(context, "EXIT", NULL); // 退出命令
