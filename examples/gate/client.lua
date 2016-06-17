@@ -1,6 +1,7 @@
 package.cpath = "lib/?.so"
-package.path = "service/?.lua;examples/?.lua;framework/?.lua"
+package.path = "service/?.lua;examples/gate/?.lua;framework/?.lua"
 
+-- 判断 Lua 版本
 if _VERSION ~= "Lua 5.3" then
 	error "Use lua 5.3"
 end

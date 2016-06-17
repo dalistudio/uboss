@@ -2,6 +2,7 @@ local sprotoparser = require "sprotoparser"
 
 local proto = {}
 
+-- 客户端 发送到 服务端的协议
 proto.c2s = sprotoparser.parse [[
 .package {
 	type 0 : integer
@@ -34,6 +35,7 @@ quit 4 {}
 
 ]]
 
+-- 服务端 发送到 客户端的协议
 proto.s2c = sprotoparser.parse [[
 .package {
 	type 0 : integer
