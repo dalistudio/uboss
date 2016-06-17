@@ -63,13 +63,13 @@
 
 #endif
 
-/* Add by skynet */
-lua_State * skynet_sig_L = NULL;
+/* Add by uboss */
+lua_State * uboss_sig_L = NULL;
 
 LUA_API void
 lua_checksig_(lua_State *L) {
-  if (skynet_sig_L == G(L)->mainthread) {
-    skynet_sig_L = NULL;
+  if (uboss_sig_L == G(L)->mainthread) {
+    uboss_sig_L = NULL;
     lua_pushnil(L);
     lua_error(L);
   }
