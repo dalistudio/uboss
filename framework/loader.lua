@@ -3,6 +3,7 @@ for word in string.gmatch(..., "%S+") do
 	table.insert(args, word)
 end
 
+-- 获得服务名称
 SERVICE_NAME = args[1]
 
 local main, pattern
@@ -45,4 +46,5 @@ if LUA_PRELOAD then
 	LUA_PRELOAD = nil
 end
 
+-- 调用主函数
 main(select(2, table.unpack(args)))

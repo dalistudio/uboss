@@ -25,19 +25,22 @@
 	Each package is uint16 + data , uint16 (serialized in big-endian) is the number of bytes comprising the data .
  */
 
+// 网络封包结构
 struct netpack {
-	int id;
-	int size;
-	void * buffer;
+	int id; // 编号
+	int size; // 数据长度
+	void * buffer; // 数据缓冲区
 };
 
+// 未完成
 struct uncomplete {
-	struct netpack pack;
-	struct uncomplete * next;
-	int read;
-	int header;
+	struct netpack pack; // 封包
+	struct uncomplete * next; // 下一封包
+	int read; // 读取
+	int header; // 头部
 };
 
+// 队列
 struct queue {
 	int cap;
 	int head;
@@ -87,6 +90,7 @@ hash_fd(int fd) {
 	return (int)(((uint32_t)(a + b + c)) % HASHSIZE);
 }
 
+// 查找未完成
 static struct uncomplete *
 find_uncomplete(struct queue *q, int fd) {
 	if (q == NULL)
@@ -111,6 +115,7 @@ find_uncomplete(struct queue *q, int fd) {
 	return NULL;
 }
 
+// 获得队列
 static struct queue *
 get_queue(lua_State *L) {
 	struct queue *q = lua_touserdata(L,1);
@@ -128,6 +133,7 @@ get_queue(lua_State *L) {
 	return q;
 }
 
+// 展开队列
 static void
 expand_queue(lua_State *L, struct queue *q) {
 	struct queue *nq = lua_newuserdata(L, sizeof(struct queue) + q->cap * sizeof(struct netpack));
@@ -145,6 +151,7 @@ expand_queue(lua_State *L, struct queue *q) {
 	lua_replace(L,1);
 }
 
+// 压入数据
 static void
 push_data(lua_State *L, int fd, void *buffer, int size, int clone) {
 	if (clone) {
@@ -164,6 +171,7 @@ push_data(lua_State *L, int fd, void *buffer, int size, int clone) {
 	}
 }
 
+// 保存未完成
 static struct uncomplete *
 save_uncomplete(lua_State *L, int fd) {
 	struct queue *q = get_queue(L);
@@ -177,12 +185,14 @@ save_uncomplete(lua_State *L, int fd) {
 	return uc;
 }
 
+// 读大小
 static inline int
 read_size(uint8_t * buffer) {
 	int r = (int)buffer[0] << 8 | (int)buffer[1];
 	return r;
 }
 
+// 压入更多
 static void
 push_more(lua_State *L, int fd, uint8_t *buffer, int size) {
 	if (size == 1) {
@@ -212,6 +222,7 @@ push_more(lua_State *L, int fd, uint8_t *buffer, int size) {
 	}
 }
 
+// 关闭未完成
 static void
 close_uncomplete(lua_State *L, int fd) {
 	struct queue *q = lua_touserdata(L,1);
@@ -222,6 +233,7 @@ close_uncomplete(lua_State *L, int fd) {
 	}
 }
 
+// 过滤数据
 static int
 filter_data_(lua_State *L, int fd, uint8_t * buffer, int size) {
 	struct queue *q = lua_touserdata(L,1);
@@ -304,6 +316,7 @@ filter_data_(lua_State *L, int fd, uint8_t * buffer, int size) {
 	}
 }
 
+// 过滤数据
 static inline int
 filter_data(lua_State *L, int fd, uint8_t * buffer, int size) {
 	int ret = filter_data_(L, fd, buffer, size);
@@ -313,6 +326,7 @@ filter_data(lua_State *L, int fd, uint8_t * buffer, int size) {
 	return ret;
 }
 
+// 压入字符串
 static void
 pushstring(lua_State *L, const char * msg, int size) {
 	if (msg) {
@@ -425,6 +439,7 @@ tolstring(lua_State *L, size_t *sz, int index) {
 	return ptr;
 }
 
+// 写大小
 static inline void
 write_size(uint8_t * buffer, int len) {
 	buffer[0] = (len >> 8) & 0xff;

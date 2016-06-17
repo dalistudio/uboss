@@ -8,6 +8,7 @@ local init_once
 local thread_id
 local message_queue = {}
 
+-- 注册 queue 协议类型
 uboss.register_protocol {
 	name = "queue",
 	-- please read uboss.h for magic number 8
@@ -23,10 +24,12 @@ uboss.register_protocol {
 	end
 }
 
+-- 执行函数
 local function do_func(f, msg)
 	return pcall(f, table.unpack(msg))
 end
 
+-- 消息调度
 local function message_dispatch(f)
 	while true do
 		if #message_queue==0 then
@@ -55,12 +58,14 @@ local function message_dispatch(f)
 	end
 end
 
+-- 注册
 function mqueue.register(f)
 	assert(init_once == nil)
 	init_once = true
 	uboss.fork(message_dispatch,f)
 end
 
+-- 抓住
 local function catch(succ, ...)
 	if succ then
 		return ...
@@ -69,14 +74,17 @@ local function catch(succ, ...)
 	end
 end
 
+-- 调用
 function mqueue.call(addr, ...)
 	return catch(uboss.call(addr, "queue", ...))
 end
 
+-- 发送
 function mqueue.send(addr, ...)
 	return uboss.send(addr, "queue", ...)
 end
 
+-- 消息队列的长度
 function mqueue.size()
 	return #message_queue
 end

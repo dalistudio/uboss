@@ -16,6 +16,7 @@ local chan_meta = {
 	end,
 }
 
+-- 默认配置
 local function default_conf(conf)
 	conf = conf or {}
 	conf.pack = conf.pack or uboss.pack
@@ -24,6 +25,7 @@ local function default_conf(conf)
 	return conf
 end
 
+-- 新建组播
 function multicast.new(conf)
 	assert(multicastd, "Init first")
 	local self = {}
@@ -39,6 +41,7 @@ function multicast.new(conf)
 	return setmetatable(self, chan_meta)
 end
 
+-- 删除
 function chan:delete()
 	local c = assert(self.channel)
 	uboss.send(multicastd, "lua", "DEL", c)
@@ -46,11 +49,13 @@ function chan:delete()
 	self.__subscribe = nil
 end
 
+-- 发布
 function chan:publish(...)
 	local c = assert(self.channel)
 	uboss.call(multicastd, "lua", "PUB", c, mc.pack(self.__pack(...)))
 end
 
+-- 订阅
 function chan:subscribe()
 	local c = assert(self.channel)
 	if self.__subscribe then
@@ -62,6 +67,7 @@ function chan:subscribe()
 	dispatch[c] = self
 end
 
+-- 解除订阅
 function chan:unsubscribe()
 	if not self.__subscribe then
 		-- already unsubscribe
@@ -72,6 +78,7 @@ function chan:unsubscribe()
 	self.__subscribe = nil
 end
 
+-- 调度订阅
 local function dispatch_subscribe(channel, source, pack, msg, sz)
 	local self = dispatch[channel]
 	if not self then
@@ -89,8 +96,12 @@ local function dispatch_subscribe(channel, source, pack, msg, sz)
 	end
 end
 
+-- 初始化
 local function init()
+	-- 启动唯一服务：组播
 	multicastd = uboss.uniqueservice "multicastd"
+
+	-- 注册 multicast 协议类型
 	uboss.register_protocol {
 		name = "multicast",
 		id = uboss.PTYPE_MULTICAST,
@@ -99,6 +110,7 @@ local function init()
 	}
 end
 
+-- 初始化
 uboss.init(init, "multicast")
 
 return multicast

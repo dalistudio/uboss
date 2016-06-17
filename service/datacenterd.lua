@@ -5,6 +5,7 @@ local database = {}
 local wait_queue = {}
 local mode = {}
 
+-- 查询
 local function query(db, key, ...)
 	if key == nil then
 		return db
@@ -13,6 +14,7 @@ local function query(db, key, ...)
 	end
 end
 
+-- 命令：查询
 function command.QUERY(key, ...)
 	local d = database[key]
 	if d then
@@ -20,6 +22,7 @@ function command.QUERY(key, ...)
 	end
 end
 
+-- 更新
 local function update(db, key, value, ...)
 	if select("#",...) == 0 then
 		local ret = db[key]
@@ -33,6 +36,7 @@ local function update(db, key, value, ...)
 	end
 end
 
+-- 唤醒
 local function wakeup(db, key1, ...)
 	if key1 == nil then
 		return
@@ -57,6 +61,7 @@ local function wakeup(db, key1, ...)
 	end
 end
 
+-- 命令：更新
 function command.UPDATE(...)
 	local ret, value = update(database, ...)
 	if ret or value == nil then
@@ -93,6 +98,7 @@ local function waitfor(db, key1, key2, ...)
 	end
 end
 
+-- 启动服务
 uboss.start(function()
 	uboss.dispatch("lua", function (_, _, cmd, ...)
 		if cmd == "WAIT" then

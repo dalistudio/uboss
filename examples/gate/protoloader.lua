@@ -6,6 +6,7 @@ local sprotoparser = require "sprotoparser"
 local sprotoloader = require "sprotoloader"
 local proto = require "proto"
 
+-- 启动服务
 uboss.start(function()
 	sprotoloader.save(proto.c2s, 1)
 	sprotoloader.save(proto.s2c, 2)

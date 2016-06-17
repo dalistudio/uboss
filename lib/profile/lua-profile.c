@@ -24,6 +24,7 @@
 
 // #define DEBUG_LOG
 
+// 获得时间
 static double
 get_time() {
 #if  !defined(__APPLE__)
@@ -48,6 +49,7 @@ get_time() {
 #endif
 }
 
+// 比较时间
 static inline double 
 diff_time(double start) {
 	double now = get_time();
@@ -58,6 +60,7 @@ diff_time(double start) {
 	}
 }
 
+// 开始
 static int
 lstart(lua_State *L) {
 	if (lua_type(L,1) == LUA_TTHREAD) {
@@ -84,6 +87,7 @@ lstart(lua_State *L) {
 	return 0;
 }
 
+// 停止
 static int
 lstop(lua_State *L) {
 	if (lua_type(L,1) == LUA_TTHREAD) {
@@ -117,6 +121,7 @@ lstop(lua_State *L) {
 	return 1;
 }
 
+// 恢复定时
 static int
 timing_resume(lua_State *L) {
 #ifdef DEBUG_LOG
@@ -141,6 +146,7 @@ timing_resume(lua_State *L) {
 	return co_resume(L);
 }
 
+// 恢复
 static int
 lresume(lua_State *L) {
 	lua_pushvalue(L,1);
@@ -148,6 +154,7 @@ lresume(lua_State *L) {
 	return timing_resume(L);
 }
 
+// 恢复协程
 static int
 lresume_co(lua_State *L) {
 	luaL_checktype(L, 2, LUA_TTHREAD);
@@ -208,10 +215,10 @@ int
 luaopen_profile(lua_State *L) {
 	luaL_checkversion(L);
 	luaL_Reg l[] = {
-		{ "start", lstart },
-		{ "stop", lstop },
-		{ "resume", lresume },
-		{ "yield", lyield },
+		{ "start", lstart }, // 开始
+		{ "stop", lstop }, // 停止
+		{ "resume", lresume }, // 恢复
+		{ "yield", lyield }, // 
 		{ "resume_co", lresume_co },
 		{ "yield_co", lyield_co },
 		{ NULL, NULL },

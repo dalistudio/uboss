@@ -28,6 +28,7 @@ local socket = require "socket"
 local slave_node = {}
 local global_name = {}
 
+-- 读封包
 local function read_package(fd)
 	local sz = socket.read(fd, 1)
 	assert(sz, "closed")
@@ -36,6 +37,7 @@ local function read_package(fd)
 	return uboss.unpack(content)
 end
 
+-- 打封包
 local function pack_package(...)
 	local message = uboss.packstring(...)
 	local size = #message
@@ -43,6 +45,7 @@ local function pack_package(...)
 	return string.char(size) .. message
 end
 
+-- 报告从节点
 local function report_slave(fd, slave_id, slave_addr)
 	local message = pack_package("C", slave_id, slave_addr)
 	local n = 0
@@ -55,6 +58,7 @@ local function report_slave(fd, slave_id, slave_addr)
 	socket.write(fd, pack_package("W", n))
 end
 
+-- 握手
 local function handshake(fd)
 	local t, slave_id, slave_addr = read_package(fd)
 	assert(t=='H', "Invalid handshake type " .. t)
@@ -71,6 +75,7 @@ local function handshake(fd)
 	return slave_id , slave_addr
 end
 
+-- 调度从节点
 local function dispatch_slave(fd)
 	local t, name, address = read_package(fd)
 	if t == 'R' then
@@ -94,6 +99,7 @@ local function dispatch_slave(fd)
 	end
 end
 
+-- 监视从节点
 local function monitor_slave(slave_id, slave_address)
 	local fd = slave_node[slave_id].fd
 	uboss.error(string.format("Harbor %d (fd=%d) report %s", slave_id, fd, slave_address))
@@ -107,6 +113,7 @@ local function monitor_slave(slave_id, slave_address)
 	socket.close(fd)
 end
 
+-- 启动服务
 uboss.start(function()
 	local master_addr = uboss.getenv "standalone"
 	uboss.error("master listen socket " .. tostring(master_addr))

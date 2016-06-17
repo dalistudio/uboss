@@ -19,17 +19,19 @@
 
 #define CACHE_SIZE 0x1000	
 
+// 连接
 static int
 lconnect(lua_State *L) {
-	const char * addr = luaL_checkstring(L, 1);
-	int port = luaL_checkinteger(L, 2);
-	int fd = socket(AF_INET,SOCK_STREAM,0);
-	struct sockaddr_in my_addr;
+	const char * addr = luaL_checkstring(L, 1); // 检查字符串
+	int port = luaL_checkinteger(L, 2); // 检查整数
+	int fd = socket(AF_INET,SOCK_STREAM,0); // 开启 Socket
+	struct sockaddr_in my_addr; // 声明 Socket 地址的结构
 
-	my_addr.sin_addr.s_addr=inet_addr(addr);
-	my_addr.sin_family=AF_INET;
-	my_addr.sin_port=htons(port);
+	my_addr.sin_addr.s_addr=inet_addr(addr); // 设置连接地址
+	my_addr.sin_family=AF_INET; // 设置连接类型
+	my_addr.sin_port=htons(port); // 设置连接端口
 
+	// 连接到服务端
 	int r = connect(fd,(struct sockaddr *)&my_addr,sizeof(struct sockaddr_in));
 
 	if (r == -1) {
@@ -39,23 +41,25 @@ lconnect(lua_State *L) {
 	int flag = fcntl(fd, F_GETFL, 0);
 	fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 
-	lua_pushinteger(L, fd);
+	lua_pushinteger(L, fd); // 压入整数 Socket
 
 	return 1;
 }
 
+// 关闭连接
 static int
 lclose(lua_State *L) {
-	int fd = luaL_checkinteger(L, 1);
-	close(fd);
+	int fd = luaL_checkinteger(L, 1); // 检查整数
+	close(fd); // 关闭连接
 
 	return 0;
 }
 
+// 发送块数据
 static void
 block_send(lua_State *L, int fd, const char * buffer, int sz) {
 	while(sz > 0) {
-		int r = send(fd, buffer, sz, 0);
+		int r = send(fd, buffer, sz, 0); // 发送数据
 		if (r < 0) {
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
@@ -70,13 +74,14 @@ block_send(lua_State *L, int fd, const char * buffer, int sz) {
 	integer fd
 	string message
  */
+// 发送
 static int
 lsend(lua_State *L) {
 	size_t sz = 0;
 	int fd = luaL_checkinteger(L,1);
 	const char * msg = luaL_checklstring(L, 2, &sz);
 
-	block_send(L, fd, msg, (int)sz);
+	block_send(L, fd, msg, (int)sz); // 发送块数据
 
 	return 0;
 }
@@ -91,17 +96,19 @@ lsend(lua_State *L) {
 		string last
  */
 
+// Socket 缓冲区结构
 struct socket_buffer {
 	void * buffer;
 	int sz;
 };
 
+// 接收数据
 static int
 lrecv(lua_State *L) {
 	int fd = luaL_checkinteger(L,1);
 
 	char buffer[CACHE_SIZE];
-	int r = recv(fd, buffer, CACHE_SIZE, 0);
+	int r = recv(fd, buffer, CACHE_SIZE, 0); // 接收数据
 	if (r == 0) {
 		lua_pushliteral(L, "");
 		// close
@@ -113,14 +120,15 @@ lrecv(lua_State *L) {
 		}
 		luaL_error(L, "socket error: %s", strerror(errno));
 	}
-	lua_pushlstring(L, buffer, r);
+	lua_pushlstring(L, buffer, r); // 压入字符串
 	return 1;
 }
 
+// 延迟
 static int
 lusleep(lua_State *L) {
-	int n = luaL_checknumber(L, 1);
-	usleep(n);
+	int n = luaL_checknumber(L, 1); // 检查数字
+	usleep(n); // 延迟
 	return 0;
 }
 
@@ -128,6 +136,7 @@ lusleep(lua_State *L) {
 
 #define QUEUE_SIZE 1024
 
+// 队列
 struct queue {
 	pthread_mutex_t lock;
 	int head;
@@ -135,10 +144,12 @@ struct queue {
 	char * queue[QUEUE_SIZE];
 };
 
+// 从标准输入中读一行
 static void *
 readline_stdin(void * arg) {
 	struct queue * q = arg;
 	char tmp[1024];
+	// 直到文件尾
 	while (!feof(stdin)) {
 		if (fgets(tmp,sizeof(tmp),stdin) == NULL) {
 			// read stdin failed
@@ -165,6 +176,7 @@ readline_stdin(void * arg) {
 	return NULL;
 }
 
+// 从标准输入中读取
 static int
 lreadstdin(lua_State *L) {
 	struct queue *q = lua_touserdata(L, lua_upvalueindex(1));
@@ -183,15 +195,16 @@ lreadstdin(lua_State *L) {
 	return 1;
 }
 
+// client socket 库
 int
 luaopen_clientsocket(lua_State *L) {
 	luaL_checkversion(L);
 	luaL_Reg l[] = {
-		{ "connect", lconnect },
-		{ "recv", lrecv },
-		{ "send", lsend },
-		{ "close", lclose },
-		{ "usleep", lusleep },
+		{ "connect", lconnect }, // 连接
+		{ "recv", lrecv }, // 接收
+		{ "send", lsend }, // 发送
+		{ "close", lclose }, // 关闭
+		{ "usleep", lusleep }, // 延迟
 		{ NULL, NULL },
 	};
 	luaL_newlib(L, l);

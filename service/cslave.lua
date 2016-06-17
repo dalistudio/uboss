@@ -12,6 +12,7 @@ local harbor_service
 local monitor = {}
 local monitor_master_set = {}
 
+-- 读封包
 local function read_package(fd)
 	local sz = socket.read(fd, 1)
 	assert(sz, "closed")
@@ -20,6 +21,7 @@ local function read_package(fd)
 	return uboss.unpack(content)
 end
 
+-- 打封包
 local function pack_package(...)
 	local message = uboss.packstring(...)
 	local size = #message
@@ -27,6 +29,7 @@ local function pack_package(...)
 	return string.char(size) .. message
 end
 
+-- 监视清理
 local function monitor_clear(id)
 	local v = monitor[id]
 	if v then
@@ -37,6 +40,7 @@ local function monitor_clear(id)
 	end
 end
 
+-- 连接从节点
 local function connect_slave(slave_id, address)
 	local ok, err = pcall(function()
 		if slaves[slave_id] == nil then
@@ -53,6 +57,7 @@ local function connect_slave(slave_id, address)
 	end
 end
 
+-- 准备
 local function ready()
 	local queue = connect_queue
 	connect_queue = nil
@@ -64,6 +69,7 @@ local function ready()
 	end
 end
 
+-- 响应名称
 local function response_name(name)
 	local address = globalname[name]
 	if queryname[name] then
@@ -75,6 +81,7 @@ local function response_name(name)
 	end
 end
 
+-- 监视主节点
 local function monitor_master(master_fd)
 	while true do
 		local ok, t, id_name, address = pcall(read_package,master_fd)
@@ -110,6 +117,7 @@ local function monitor_master(master_fd)
 	end
 end
 
+-- 接受从节点
 local function accept_slave(fd)
 	socket.start(fd)
 	local id = socket.read(fd, 1)
@@ -131,6 +139,7 @@ local function accept_slave(fd)
 	uboss.send(harbor_service, "harbor", string.format("A %d %d", fd, id))
 end
 
+-- 注册 harbor 协议类型
 uboss.register_protocol {
 	name = "harbor",
 	id = uboss.PTYPE_HARBOR,
@@ -138,6 +147,7 @@ uboss.register_protocol {
 	unpack = uboss.tostring,
 }
 
+-- 注册 text 协议类型
 uboss.register_protocol {
 	name = "text",
 	id = uboss.PTYPE_TEXT,
@@ -145,6 +155,7 @@ uboss.register_protocol {
 	unpack = uboss.tostring,
 }
 
+-- 监视节点
 local function monitor_harbor(master_fd)
 	return function(session, source, command)
 		local t = string.sub(command, 1, 1)
@@ -169,6 +180,7 @@ local function monitor_harbor(master_fd)
 	end
 end
 
+-- 节点注册
 function harbor.REGISTER(fd, name, handle)
 	assert(globalname[name] == nil)
 	globalname[name] = handle
@@ -177,6 +189,7 @@ function harbor.REGISTER(fd, name, handle)
 	uboss.redirect(harbor_service, handle, "harbor", 0, "N " .. name)
 end
 
+-- 节点链接
 function harbor.LINK(fd, id)
 	if slaves[id] then
 		if monitor[id] == nil then
@@ -188,10 +201,12 @@ function harbor.LINK(fd, id)
 	end
 end
 
+-- 主节点链接
 function harbor.LINKMASTER()
 	table.insert(monitor_master_set, uboss.response())
 end
 
+-- 节点连接
 function harbor.CONNECT(fd, id)
 	if not slaves[id] then
 		if monitor[id] == nil then
@@ -203,6 +218,7 @@ function harbor.CONNECT(fd, id)
 	end
 end
 
+-- 节点查询名称
 function harbor.QUERYNAME(fd, name)
 	if name:byte() == 46 then	-- "." , local name
 		uboss.ret(uboss.pack(uboss.localname(name)))
@@ -223,6 +239,7 @@ function harbor.QUERYNAME(fd, name)
 	end
 end
 
+-- 启动服务
 uboss.start(function()
 	local master_addr = uboss.getenv "master"
 	local harbor_id = tonumber(uboss.getenv "harbor")
