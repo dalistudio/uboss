@@ -31,8 +31,8 @@ macosx : EXPORT :=
 macosx linux : UBOSS_LIBS += -ldl
 linux freebsd : UBOSS_LIBS += -lrt
 
-linux : MALLOC_STATICLIB :=
-linux : UBOSS_DEFINES :=-DNOUSE_JEMALLOC
+#linux : MALLOC_STATICLIB :=
+#linux : UBOSS_DEFINES :=-DNOUSE_JEMALLOC
 
 # Turn off jemalloc and malloc hook on macosx
 
