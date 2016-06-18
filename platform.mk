@@ -31,6 +31,7 @@ macosx : EXPORT :=
 macosx linux : UBOSS_LIBS += -ldl
 linux freebsd : UBOSS_LIBS += -lrt
 
+# 启用下面两行定义，将禁止 Jemalloc 库的使用
 #linux : MALLOC_STATICLIB :=
 #linux : UBOSS_DEFINES :=-DNOUSE_JEMALLOC
 

@@ -1,3 +1,8 @@
+添加 子模块：
+git submodule add https://github.com/jemalloc/jemalloc.git 3rd/jemalloc
+
+
+上面命令将生成下面文件
 添加 .gitmodules 文件，内容如下：
 
 [submodule "3rd/jemalloc"]

@@ -19,6 +19,7 @@
 #include "uboss_socket.h"
 #include "uboss_daemon.h"
 #include "uboss_harbor.h"
+#include "uboss_license.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -62,6 +63,24 @@ wakeup(struct monitor *m, int busy) {
 		// signal sleep worker, "spurious wakeup" is harmless
 		pthread_cond_signal(&m->cond); // 激发等待 &m->cond 条件的线程
 	}
+}
+
+// 许可证线程
+static void *
+thread_license(void *p) {
+	// 这是一个特殊的线程，主要用于每隔一段时间就验证一下许可证
+	// 只有通过验证程序才可以正常的运行，也要防止意外终止服务
+	fprintf(stdout, "This is License Thread\n");
+	for (;;) {
+		int r = uboss_license_verify(); // 验证许可证
+		if (r<0) {
+			break;
+		}
+		sleep(30); // 30秒检查一次
+	}
+
+	
+	return NULL;
 }
 
 // Socket 线程
@@ -173,7 +192,7 @@ thread_worker(void *p) {
 // 启动线程
 static void
 start(int thread) {
-	pthread_t pid[thread+3]; // 启动线程数量
+	pthread_t pid[thread+4]; // 启动线程数量
 
 	struct monitor *m = uboss_malloc(sizeof(*m)); // 分配指针的内存空间
 	memset(m, 0, sizeof(*m)); // 内存清空
@@ -203,6 +222,7 @@ start(int thread) {
 	create_thread(&pid[0], thread_monitor, m); // 创建 监视器 线程
 	create_thread(&pid[1], thread_timer, m); // 创建 定时器 线程
 	create_thread(&pid[2], thread_socket, m); // 创建 Socket网络 线程
+	create_thread(&pid[3], thread_license, m); // 创建 许可证 线程
 
 	// 权重
 	static int weight[] = { 
@@ -221,11 +241,11 @@ start(int thread) {
 		} else {
 			wp[i].weight = 0;
 		}
-		create_thread(&pid[i+3], thread_worker, &wp[i]); // 创建 工作 线程
+		create_thread(&pid[i+4], thread_worker, &wp[i]); // 创建 工作 线程
 	}
 
 	// 等待 线程 结束
-	for (i=0;i<thread+3;i++) {
+	for (i=0;i<thread+4;i++) {
 		pthread_join(pid[i], NULL); 
 	}
 
@@ -262,6 +282,7 @@ uboss_start(struct uboss_config * config) {
 	uboss_module_init(config->module_path); // 初始化 加载模块
 	uboss_timer_init(); // 初始化 定时器模块
 	uboss_socket_init(); // 初始化 Socket网络模块
+	uboss_license_init(); // 初始化 许可证模块
 
 	// 创建新的 uBoss 上下文， 用于 日志记录器
 	struct uboss_context *ctx = uboss_context_new(config->logservice, config->logger);

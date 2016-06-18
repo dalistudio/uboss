@@ -77,7 +77,7 @@ LUA_CLIB = uboss socketdriver profile netpack stm bson crypt clientsocket \
 UBOSS_CORE = uboss.c uboss_handle.c uboss_module.c uboss_mq.c \
   uboss_server.c uboss_start.c uboss_timer.c uboss_error.c \
   uboss_harbor.c uboss_env.c uboss_monitor.c uboss_socket.c socket_server.c \
-  uboss_malloc.c uboss_daemon.c uboss_log.c uboss_command.c
+  uboss_malloc.c uboss_daemon.c uboss_log.c uboss_command.c uboss_license.c
 
 all : \
   $(UBOSS_BUILD_PATH)/uboss \
@@ -164,7 +164,7 @@ $(LUA_LIB_PATH)/lpeg.so : lib/lpeg/lpcap.c lib/lpeg/lpcode.c lib/lpeg/lpprint.c 
 # 清理项目
 ###
 clean :
-	rm -f $(UBOSS_BUILD_PATH)/uboss $(MODULE_PATH)/*.so $(LUA_LIB_PATH)/*.so
+	rm -f $(UBOSS_BUILD_PATH)/uboss $(MODULE_PATH)/*.so $(LUA_LIB_PATH)/*.so $(UBOSS_BUILD_PATH)/core/*.o
 
 ###
 # 清理所有项目，包括 Lua 和 Jemalloc 项目
