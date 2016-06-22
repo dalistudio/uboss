@@ -165,11 +165,14 @@ uboss_module_instance_create(struct uboss_module *m) {
 	if (m->create) { // 如果创建函数存在
 		return m->create(); // 返回调用模块中的创建函数
 	} else {
-		return (void *)(intptr_t)(~0); // 返回空指针
+		// C语言中 ~ 符号为按位取反的意思
+		// 例如： ~0x37=~(0011 0111)=(1100 1000)=0xC8
+		return (void *)(intptr_t)(~0); // 返回空指针 即：0xFFFF FFFF
 	}
 }
 
 // 从模块中获取实例化的初始化函数指针
+// 模块中这个初始化函数是必须的
 int
 uboss_module_instance_init(struct uboss_module *m, void * inst, struct uboss_context *ctx, const char * parm) {
 	return m->init(inst, ctx, parm); // 返回调用模块中的初始化函数

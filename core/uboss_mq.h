@@ -19,10 +19,10 @@ struct uboss_message {
 	uint32_t source; // 来源
 	int session; // 会话
 	void * data; // 数据的地址
-	size_t sz; // 数据的长度
+	size_t sz; // 数据的长度(前8bit表示数据的类型)
 };
 
-// type is encoding in uboss_message.sz high 8bit
+// 数据类型：uboss_message.sz 高 8bit
 #define MESSAGE_TYPE_MASK (SIZE_MAX >> 8)
 #define MESSAGE_TYPE_SHIFT ((sizeof(size_t)-1) * 8)
 
