@@ -10,10 +10,10 @@ uboss.start(function()
 	-- 获得 standalone 配置项判断你启动的是一个 master 节点还是 slave 节点
 	local standalone = uboss.getenv "standalone"
 
-	-- 加载 luavm
+	-- 加载 luavm 模块，并启动 launcher 服务脚本
 	local launcher = assert(uboss.launch("luavm","launcher"))
 
-	-- 注册名称
+	-- 注册 launcher 服务的名称
 	uboss.name(".launcher", launcher)
 
 	-- 获得节点编号

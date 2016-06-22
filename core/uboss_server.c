@@ -114,7 +114,7 @@ uboss_context_new(const char * name, const char *param) {
 	int r = uboss_module_instance_init(mod, inst, ctx, param); // 从模块指针中获取 初始化函数的指针
 	CHECKCALLING_END(ctx)
 	if (r == 0) { // 初始化函数返回值为0，表示正常。
-		struct uboss_context * ret = uboss_context_release(ctx); // 从模块指针中获取 释放函数的指针
+		struct uboss_context * ret = uboss_context_release(ctx); // 检查上下文释放标志 ref 是否为0
 		if (ret) {
 			ctx->init = true;
 		}
@@ -156,25 +156,27 @@ uboss_context_reserve(struct uboss_context *ctx) {
 	uboss_context_grab(ctx);
 	// don't count the context reserved, because uboss abort (the worker threads terminate) only when the total context is 0 .
 	// the reserved context will be release at last.
-	context_dec();
+	context_dec(); // 上下文结构数量减一
 }
 
 // 删除上下文结构
 static void 
 delete_context(struct uboss_context *ctx) {
+	// 如果启动了日志文件
 	if (ctx->logfile) {
-		fclose(ctx->logfile);
+		fclose(ctx->logfile); // 关闭日志句柄
 	}
-	uboss_module_instance_release(ctx->mod, ctx->instance);
-	uboss_mq_mark_release(ctx->queue);
-	CHECKCALLING_DESTROY(ctx)
-	uboss_free(ctx);
-	context_dec();
+	uboss_module_instance_release(ctx->mod, ctx->instance); // 调用模块中的释放函数
+	uboss_mq_mark_release(ctx->queue); // 标记 消息队列 可以释放
+	CHECKCALLING_DESTROY(ctx) // 检查并销毁 上下文结构
+	uboss_free(ctx); // 释放上下文结构
+	context_dec(); // 上下文结构数量减一
 }
 
 // 释放上下文
 struct uboss_context * 
 uboss_context_release(struct uboss_context *ctx) {
+	// 如果上下文结构数量减一，等于0
 	if (ATOM_DEC(&ctx->ref) == 0) {
 		delete_context(ctx); // 删除上下文结构
 		return NULL;
@@ -286,7 +288,7 @@ uboss_context_message_dispatch(struct uboss_monitor *sm, struct message_queue *q
 		if (ctx->cb == NULL) {
 			uboss_free(msg.data); // 释放消息的数据内存空间
 		} else {
-			dispatch_message(ctx, &msg); // 分发消息
+			dispatch_message(ctx, &msg); // 核心功能：分发消息
 		}
 
 		uboss_monitor_trigger(sm, 0,0); // 触发监视
