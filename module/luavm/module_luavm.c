@@ -31,14 +31,16 @@ struct luavm {
 #define codecache luaopen_cache
 
 #else
+// 下面是不使用修改的Lua版本时，提供的替代功能
 
-// 清理
+// 虚假的清理函数
 static int
 cleardummy(lua_State *L) {
   return 0;
 }
 
 // 定义 Lua 的 codecache 库
+// 实际功能在修改的Lua代码中
 static int 
 codecache(lua_State *L) {
 	luaL_Reg l[] = {

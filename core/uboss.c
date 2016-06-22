@@ -126,7 +126,7 @@ logo() {
 	fprintf(stdout, "        ##  ####          ##    ##    ##    ##          ##          ## \n");
 	fprintf(stdout, "        ####  ##  ##    ########        ####      ########    ######## \n");
 	fprintf(stdout, "        ##    ####                                                     \n");
-	fprintf(stdout, "        ##                 A lightweight micro service framework       \n");
+	fprintf(stdout, "        ##                  A Lightweight MicroService Framework       \n");
 	fprintf(stdout, "\n\n");
 	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");
 }
