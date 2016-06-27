@@ -106,10 +106,10 @@ uboss_mq_create(uint32_t handle) {
 	// When the queue is create (always between service create and service init) ,
 	// set in_global flag to avoid push it to global queue .
 	// If the service init success, uboss_context_new will call uboss_mq_push to push it to global queue.
-	q->in_global = MQ_IN_GLOBAL; // 是否在全局队列中 =1
-	q->release = 0; // 是否可释放
-	q->overload = 0; // 是否过载
-	q->overload_threshold = MQ_OVERLOAD; // 过载的阀值 =1024
+	q->in_global = MQ_IN_GLOBAL; // 是否在全局队列中：0=否 1=是 （默认为1）
+	q->release = 0; // 是否可释放：0=否 1=是
+	q->overload = 0; // 是否过载：0=否 1=是
+	q->overload_threshold = MQ_OVERLOAD; // 过载的阀值 （默认为1024）
 	q->queue = uboss_malloc(sizeof(struct uboss_message) * q->cap); // 分配队列的内存空间
 	q->next = NULL; // 下一个队列的指针
 
