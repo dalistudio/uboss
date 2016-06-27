@@ -277,6 +277,9 @@ uboss_context_message_dispatch(struct uboss_monitor *sm, struct message_queue *q
 			n = uboss_mq_length(q); // 获得队列的长度
 			n >>= weight; // 权重
 		}
+
+		// 服务消息队列调度时，如果发现过载，则打印输出过载信息
+		// 过载后框架不会做其他处理，仅输出消息
 		int overload = uboss_mq_overload(q); // 消息过载
 		if (overload) {
 			uboss_error(ctx, "May overload, message queue length = %d", overload);

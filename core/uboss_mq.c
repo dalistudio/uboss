@@ -183,14 +183,15 @@ uboss_mq_pop(struct message_queue *q, struct uboss_message *message) {
 			length += cap;
 		}
 
-		// 如果队列长度 大于 重载阀值，阀值放大2倍
+		// 如果队列长度 大于 过载阀值，阀值放大2倍
 		while (length > q->overload_threshold) {
-			q->overload = length; // 重载值 = 队列长度
-			q->overload_threshold *= 2; // 重载阀值放大2倍
+			q->overload = length; // 过载值 = 队列长度
+			q->overload_threshold *= 2; // 过载阀值放大2倍
 		}
 	} else {
-		// reset overload_threshold when queue is empty
-		q->overload_threshold = MQ_OVERLOAD; // 否则重载阀值为默认 1024
+		// 服务消息队列为空时，重置 过载阀值 为默认值
+		// 当消息队列为空时，是否也应该重置一下 消息队列 为默认值
+		q->overload_threshold = MQ_OVERLOAD; // 否则过载阀值为默认 1024
 	}
 
 	if (ret) {
