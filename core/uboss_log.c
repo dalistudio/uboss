@@ -46,7 +46,7 @@ uboss_log_close(struct uboss_context * ctx, FILE *f, uint32_t handle) {
 	fclose(f); // 关闭文件流
 }
 
-// 写日志块
+// 以二进制块方式，写入日志
 static void
 log_blob(FILE *f, void * buffer, size_t sz) {
 	size_t i;
@@ -56,37 +56,37 @@ log_blob(FILE *f, void * buffer, size_t sz) {
 	}
 }
 
-// 写网络日志
+// 来自消息队列中的消息数据，写入日志
 static void
 log_socket(FILE * f, struct uboss_socket_message * message, size_t sz) {
 	fprintf(f, "[socket] %d %d %d ", message->type, message->id, message->ud);
 
 	if (message->buffer == NULL) {
 		const char *buffer = (const char *)(message + 1);
-		sz -= sizeof(*message);
-		const char * eol = memchr(buffer, '\0', sz);
+		sz -= sizeof(*message); // 计算消息的长度
+		const char * eol = memchr(buffer, '\0', sz); // 查找 '\0' 字符出现的位置
 		if (eol) {
 			sz = eol - buffer;
 		}
-		fprintf(f, "[%*s]", (int)sz, (const char *)buffer);
+		fprintf(f, "[%*s]", (int)sz, (const char *)buffer); // 将日志写入 文件流
 	} else {
 		sz = message->ud;
-		log_blob(f, message->buffer, sz);
+		log_blob(f, message->buffer, sz); // 将消息的数据，以二进制块写入日志
 	}
 	fprintf(f, "\n");
-	fflush(f);
+	fflush(f); // 清空缓冲区，并输出数据到流
 }
 
 // 输出日志
 void 
 uboss_log_output(FILE *f, uint32_t source, int type, int session, void * buffer, size_t sz) {
 	if (type == PTYPE_SOCKET) {
-		log_socket(f, buffer, sz);
+		log_socket(f, buffer, sz); // 来自消息的数据
 	} else {
 		uint32_t ti = (uint32_t)uboss_now();
 		fprintf(f, ":%08x %d %d %u ", source, type, session, ti);
 		log_blob(f, buffer, sz); // 写入日志块
 		fprintf(f,"\n");
-		fflush(f);
+		fflush(f); // 清空缓冲区，并输出数据到流
 	}
 }

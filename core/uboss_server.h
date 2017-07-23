@@ -43,12 +43,16 @@ struct uboss_context {
 	uboss_cb cb; // 服务模块的返回函数指针
 	struct message_queue *queue; // 消息队列
 	FILE * logfile; // 日志文件流
+	uint64_t cpu_cost;	// in microsec
+	uint64_t cpu_start;	// in microsec
 	char result[32]; // 结果
 	uint32_t handle; // 句柄值
 	int session_id; // 会话 ID
 	int ref; // 调用次数
+	int message_count;
 	bool init; // 初始化
 	bool endless; // 终结标志
+	bool profile;
 
 	CHECKCALLING_DECL
 };

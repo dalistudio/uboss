@@ -328,3 +328,26 @@ uboss_timer_init(void) {
 	TI->current_point = gettime(); // 获得系统启动的时间点
 }
 
+// for profile
+
+#define NANOSEC 1000000000
+#define MICROSEC 1000000
+
+uint64_t
+uboss_thread_time(void) {
+#if  !defined(__APPLE__)
+	struct timespec ti;
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ti);
+
+	return (uint64_t)ti.tv_sec * MICROSEC + (uint64_t)ti.tv_nsec / (NANOSEC / MICROSEC);
+#else
+	struct task_thread_times_info aTaskInfo;
+	mach_msg_type_number_t aTaskInfoCount = TASK_THREAD_TIMES_INFO_COUNT;
+	if (KERN_SUCCESS != task_info(mach_task_self(), TASK_THREAD_TIMES_INFO, (task_info_t )&aTaskInfo, &aTaskInfoCount)) {
+		return 0;
+	}
+
+	return (uint64_t)(aTaskInfo.user_time.seconds) + (uint64_t)aTaskInfo.user_time.microseconds;
+#endif
+}
+

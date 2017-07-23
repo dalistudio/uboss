@@ -240,6 +240,37 @@ cmd_monitor(struct uboss_context * context, const char * param) {
 	return NULL;
 }
 
+static const char *
+cmd_stat(struct uboss_context * context, const char * param) {
+	if (strcmp(param, "mqlen") == 0) {
+		int len = uboss_mq_length(context->queue);
+		sprintf(context->result, "%d", len);
+	} else if (strcmp(param, "endless") == 0) {
+		if (context->endless) {
+			strcpy(context->result, "1");
+			context->endless = false;
+		} else {
+			strcpy(context->result, "0");
+		}
+	} else if (strcmp(param, "cpu") == 0) {
+		double t = (double)context->cpu_cost / 1000000.0;	// microsec
+		sprintf(context->result, "%lf", t);
+	} else if (strcmp(param, "time") == 0) {
+		if (context->profile) {
+			uint64_t ti = uboss_thread_time() - context->cpu_start;
+			double t = (double)ti / 1000000.0;	// microsec
+			sprintf(context->result, "%lf", t);
+		} else {
+			strcpy(context->result, "0");
+		}
+	} else if (strcmp(param, "message") == 0) {
+		sprintf(context->result, "%d", context->message_count);
+	} else {
+		context->result[0] = '\0';
+	}
+	return context->result;
+}
+
 // 获得消息队列长度的指令
 static const char *
 cmd_mqlen(struct uboss_context * context, const char * param) {
@@ -328,6 +359,7 @@ static struct command_func cmd_funcs[] = {
 	{ "ENDLESS", cmd_endless },
 	{ "ABORT", cmd_abort },
 	{ "MONITOR", cmd_monitor },
+	{ "STAT", cmd_stat },
 	{ "MQLEN", cmd_mqlen },
 	{ "LOGON", cmd_logon },
 	{ "LOGOFF", cmd_logoff },

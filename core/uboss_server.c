@@ -19,6 +19,7 @@
 #include "uboss_harbor.h"
 #include "uboss_start.h"
 #include "uboss_lock.h"
+#include "uboss_timer.h"
 #include "atomic.h"
 
 #include <pthread.h>
@@ -228,11 +229,21 @@ dispatch_message(struct uboss_context *ctx, struct uboss_message *msg) {
 	if (ctx->logfile) { // 如果uboss上下文设置类日志文件
 		uboss_log_output(ctx->logfile, msg->source, type, msg->session, msg->data, sz); // 写入日志信息
 	}
+	++ctx->message_count;
 
-	// 调用 服务模块中的返回函数
-	if (!ctx->cb(ctx, ctx->cb_ud, type, msg->session, msg->source, msg->data, sz)) {
+	int reserve_msg;
+	if (ctx->profile) {
+		ctx->cpu_start = uboss_thread_time();
+		reserve_msg = ctx->cb(ctx, ctx->cb_ud, type, msg->session, msg->source, msg->data, sz);
+		uint64_t cost_time = uboss_thread_time() - ctx->cpu_start;
+		ctx->cpu_cost += cost_time;
+	} else {
+		// 调用 服务模块中的返回函数
+		reserve_msg = ctx->cb(ctx, ctx->cb_ud, type, msg->session, msg->source, msg->data, sz);
+	}
+	if (!reserve_msg) {
 		uboss_free(msg->data); // 释放消息数据
-	} 
+	}
 	CHECKCALLING_END(ctx)
 }
 

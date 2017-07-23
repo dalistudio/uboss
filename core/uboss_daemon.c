@@ -89,7 +89,7 @@ daemon_init(const char *pidfile) {
 	int pid = check_pid(pidfile); // 检查 PID
 
 	if (pid) {
-		fprintf(stderr, "Skynet is already running, pid = %d.\n", pid);
+		fprintf(stderr, "uBoss is already running, pid = %d.\n", pid);
 		return 1;
 	}
 
