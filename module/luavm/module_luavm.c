@@ -202,6 +202,7 @@ void
 luavm_signal(struct luavm *l, int signal) {
 	uboss_error(l->ctx, "recv a signal %d", signal); // 打印接收到一个信号的消息
 #ifdef lua_checksig
+	// 修改位置为：lua.h 和 lvm.c
 	// If our lua support signal (modified lua version by uboss), trigger it.
 	uboss_sig_L = l->L;
 #endif

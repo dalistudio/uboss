@@ -48,10 +48,10 @@ _get_nic_mac() {
 int
 _get_hardware_hash() {
 	// 获取 CPUID 相关数据
-	int cpuid = _get_cpu_id();
+//	int cpuid = _get_cpu_id();
 
 	// 获取 网卡MAC 相关数据
-	int nicmac = _get_nic_mac();
+//	int nicmac = _get_nic_mac();
 
 	// SHA1(CPUID + MAC + Salt)
 
@@ -86,13 +86,13 @@ uboss_license_function(int function) {
 // 许可证验证
 int
 uboss_license_verify() {
-	fprintf(stdout, "verify License ...\n");
+//	fprintf(stdout, "verify License ...\n");
 	return 0;
 }
 
 // 许可证初始化
 void 
 uboss_license_init(void) {
-	fprintf(stdout, "This is License\n");
+//	fprintf(stdout, "This is License\n");
 }
 
