@@ -70,7 +70,7 @@ static void *
 thread_license(void *p) {
 	// 这是一个特殊的线程，主要用于每隔一段时间就验证一下许可证
 	// 只有通过验证程序才可以正常的运行，也要防止意外终止服务
-	fprintf(stdout, "This is License Thread\n");
+	//fprintf(stdout, "This is License Thread\n");
 	for (;;) {
 		int r = uboss_license_verify(); // 验证许可证
 		if (r<0) {

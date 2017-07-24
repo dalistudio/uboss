@@ -57,6 +57,9 @@ uboss_monitor_check(struct uboss_monitor *um) {
 			uboss_error(NULL, "A message from [ :%08x ] to [ :%08x ] maybe in an endless loop (version = %d)", um->source , um->destination, um->version);
 		}
 	} else {
+		// 因为监视线程大约每5秒钟检查一次，调用时设置两个版本相等。
+		// 等待5秒钟后，如果当前版本没有增加，则表示该服务还在运行，
+		// 有可能服务已经进入死循环，则打印消息，以便上层知晓后处理。
 		um->check_version = um->version; // 设置版本和检查版本的值
 	}
 }

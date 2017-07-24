@@ -730,7 +730,12 @@ harbor_init(struct harbor *h, struct uboss_context *ctx, const char * args) {
 	}
 	h->id = harbor_id;
 	h->slave = slave;
+
+	// 处理远程服务的回调函数
 	uboss_callback(ctx, h, mainloop);
+
+	// 调用 框架API，告诉框架 harbor 服务的Contex指针地址，
+	// 便于框架将所有远程消息发送往该指针的服务处理。
 	uboss_harbor_start(ctx);
 
 	return 0;

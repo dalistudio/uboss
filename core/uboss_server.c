@@ -296,6 +296,11 @@ uboss_context_message_dispatch(struct uboss_monitor *sm, struct message_queue *q
 			uboss_error(ctx, "May overload, message queue length = %d", overload);
 		}
 
+		
+		//
+		// 在处理这条消息前触发监视，给这个线程的版本加一
+		// 并将消息来源和处理的服务地址发给监视线程。
+		//
 		uboss_monitor_trigger(sm, msg.source , handle); // 触发监视
 
 		// 如果上下文中的返回函数指针为空
@@ -305,6 +310,10 @@ uboss_context_message_dispatch(struct uboss_monitor *sm, struct message_queue *q
 			dispatch_message(ctx, &msg); // 核心功能：分发消息
 		}
 
+		//
+		// 处理完消息后，再触发监视，将来源和目的设置成框架自己
+		// 以做好下次调用准备，即清空来源和目的地址。
+		//
 		uboss_monitor_trigger(sm, 0,0); // 触发监视
 	}
 
