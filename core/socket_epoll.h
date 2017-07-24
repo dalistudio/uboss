@@ -1,13 +1,3 @@
-/*
-** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A Lightweight MicroService Framework
-**
-** uBoss Socket epoll
-**
-** Dali Wang<dali@uboss.org>
-** See Copyright Notice in uboss.h
-*/
-
 #ifndef poll_socket_epoll_h
 #define poll_socket_epoll_h
 
@@ -68,7 +58,8 @@ sp_wait(int efd, struct event *e, int max) {
 		e[i].s = ev[i].data.ptr;
 		unsigned flag = ev[i].events;
 		e[i].write = (flag & EPOLLOUT) != 0;
-		e[i].read = (flag & EPOLLIN) != 0;
+		e[i].read = (flag & (EPOLLIN | EPOLLHUP)) != 0;
+		e[i].error = (flag & EPOLLERR) != 0;
 	}
 
 	return n;

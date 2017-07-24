@@ -1,13 +1,3 @@
-/*
-** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A Lightweight MicroService Framework
-**
-** uBoss Socket poll
-**
-** Dali Wang<dali@uboss.org>
-** See Copyright Notice in uboss.h
-*/
-
 #ifndef socket_poll_h
 #define socket_poll_h
 
@@ -19,6 +9,7 @@ struct event {
 	void * s;
 	bool read;
 	bool write;
+	bool error;
 };
 
 static bool sp_invalid(poll_fd fd);
