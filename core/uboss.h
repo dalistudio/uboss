@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** Copyright (c) 2014-2017 uboss.org All rights Reserved.
 ** uBoss - A Lightweight MicroService Framework
 **
 ** uBoss Main Function
@@ -53,7 +53,7 @@ void uboss_debug_memory(const char *info);	// for debug use, output current serv
 /*
 The MIT License (MIT)
 
-Copyright (c) 2014-2016 uboss.org
+Copyright (c) 2014-2017 uboss.org
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
