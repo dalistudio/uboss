@@ -34,7 +34,7 @@ void uboss_socket_free();
 int uboss_socket_poll();
 
 int uboss_socket_send(struct uboss_context *ctx, int id, void *buffer, int sz);
-void uboss_socket_send_lowpriority(struct uboss_context *ctx, int id, void *buffer, int sz);
+int uboss_socket_send_lowpriority(struct uboss_context *ctx, int id, void *buffer, int sz);
 int uboss_socket_listen(struct uboss_context *ctx, const char *host, int port, int backlog);
 int uboss_socket_connect(struct uboss_context *ctx, const char *host, int port);
 int uboss_socket_bind(struct uboss_context *ctx, int fd);

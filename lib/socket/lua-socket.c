@@ -1,15 +1,6 @@
-/*
-** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A lightweight micro service framework
-**
-** uBoss Lua Socket Library
-**
-** Dali Wang<dali@uboss.org>
-** See Copyright Notice in uboss.h
-*/
+#define LUA_LIB
 
 #include "uboss_malloc.h"
-#include "uboss_socket.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +13,8 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+
+#include "uboss_socket.h"
 
 #define BACKLOG 32
 // 2 ** 12 == 4096
@@ -96,8 +89,8 @@ lnewbuffer(lua_State *L) {
 	Comment: The table pool record all the buffers chunk, 
 	and the first index [1] is a lightuserdata : free_node. We can always use this pointer for struct buffer_node .
 	The following ([2] ...)  userdatas in table pool is the buffer chunk (for struct buffer_node), 
-	we never free them until the VM closed. The size of first chunk ([2]) is 8 struct buffer_node,
-	and the second size is 16 ... The largest size of chunk is LARGE_PAGE_NODE (4096)
+	we never free them until the VM closed. The size of first chunk ([2]) is 16 struct buffer_node,
+	and the second size is 32 ... The largest size of chunk is LARGE_PAGE_NODE (4096)
 
 	lpushbbuffer will get a free struct buffer_node from table pool, and then put the msg/size in it.
 	lpopbuffer return the struct buffer_node back to table pool (By calling return_free_node).
@@ -574,8 +567,9 @@ lsendlow(lua_State *L) {
 	int id = luaL_checkinteger(L, 1);
 	int sz = 0;
 	void *buffer = get_buffer(L, 2, &sz);
-	uboss_socket_send_lowpriority(ctx, id, buffer, sz);
-	return 0;
+	int err = uboss_socket_send_lowpriority(ctx, id, buffer, sz);
+	lua_pushboolean(L, !err);
+	return 1;
 }
 
 static int
@@ -683,8 +677,8 @@ ludp_address(lua_State *L) {
 	return 2;
 }
 
-int
-luaopen_socketdriver(lua_State *L) {
+LUAMOD_API int
+luaopen_uboss_socketdriver(lua_State *L) {
 	luaL_checkversion(L);
 	luaL_Reg l[] = {
 		{ "buffer", lnewbuffer },

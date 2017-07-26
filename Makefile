@@ -18,7 +18,7 @@ MODULE_PATH ?= module
 LUA_LIB_PATH ?= lib
 
 # 定义标志
-CFLAGS = -g -O2 -Wall -I$(LUA_INC) $(MYCFLAGS)
+CFLAGS = -g -O2 -Wall
 # CFLAGS += -DUSE_PTHREAD_LOCK
 
 
@@ -85,7 +85,7 @@ all : \
   $(foreach v, $(LUA_CLIB), $(LUA_LIB_PATH)/$(v).so) 
 
 $(UBOSS_BUILD_PATH)/uboss : $(foreach v, $(UBOSS_CORE), core/$(v)) $(LUA_LIB) $(MALLOC_STATICLIB)
-	$(CC) $(CFLAGS) -o $@ $^ -Icore -I$(JEMALLOC_INC) $(LDFLAGS) $(EXPORT) $(UBOSS_LIBS) $(UBOSS_DEFINES)
+	$(CC) $(CFLAGS) -o $@ $^ -Icore -I$(LUA_INC) -I$(JEMALLOC_INC) $(EXPORT) $(UBOSS_LIBS) $(UBOSS_DEFINES)
 
 $(LUA_LIB_PATH) :
 	mkdir $(LUA_LIB_PATH)
@@ -98,7 +98,7 @@ $(MODULE_PATH) :
 ###
 define MODULE_TEMP
   $$(MODULE_PATH)/$(1).so : module/$(1)/module_$(1).c | $$(MODULE_PATH)
-	$$(CC) $$(CFLAGS) $$(SHARED) $$< -o $$@ -Icore
+	$$(CC) $$(CFLAGS) $$(SHARED) $$< -o $$@ -Icore -I$$(LUA_INC)
 endef
 
 $(foreach v, $(MODULE), $(eval $(call MODULE_TEMP,$(v))))
@@ -107,58 +107,58 @@ $(foreach v, $(MODULE), $(eval $(call MODULE_TEMP,$(v))))
 # 编译 lua 库
 ###
 $(LUA_LIB_PATH)/uboss.so : lib/uboss/lua-uboss.c lib/uboss/lua-seri.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/socketdriver.so : lib/socket/lua-socket.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/profile.so : lib/profile/lua-profile.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ 
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@  -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/netpack.so : lib/netpack/lua-netpack.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/stm.so : lib/stm/lua-stm.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/bson.so : lib/bson/lua-bson.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/crypt.so : lib/crypt/lua-crypt.c lib/crypt/lsha1.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/cluster.so : lib/cluster/lua-cluster.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/clientsocket.so : lib/clientsocket/lua-clientsocket.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/memory.so : lib/memory/lua-memory.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/multicast.so : lib/multicast/lua-multicast.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/mongo.so : lib/mongo/lua-mongo.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/mysqlaux.so : lib/mysqlaux/lua-mysqlaux.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/sharedata.so : lib/sharedata/lua-sharedata.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/debugchannel.so : lib/debugchannel/lua-debugchannel.c | $(LUA_LIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/sproto.so : lib/sproto/sproto.c lib/sproto/lsproto.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/sproto
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/sproto -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/md5.so : lib/md5/md5.c lib/md5/md5lib.c lib/md5/compat-5.2.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/md5
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/md5 -I$(LUA_INC)
 
 $(LUA_LIB_PATH)/lpeg.so : lib/lpeg/lpcap.c lib/lpeg/lpcode.c lib/lpeg/lpprint.c lib/lpeg/lptree.c lib/lpeg/lpvm.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/lpeg 
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/lpeg -I$(LUA_INC)
 
 ###
 # 清理项目

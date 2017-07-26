@@ -58,12 +58,18 @@ uboss_globalmq_push(struct message_queue * queue) {
 	struct global_queue *q= Q; // 获取 全局消息队列
 
 	SPIN_LOCK(q) // 锁住
-	assert(queue->next == NULL); // 断言，不能压入已在全局队列中的服务队列
+
+	// 断言，服务消息的next必须为NULL，否在结束。
+	// 因为不能把一个已存在消息队列的消息存入，否在会有意想不到的错误。
+	assert(queue->next == NULL); 
 
 	// 如果链表尾存在数据，表示全局队列不为空
 	if(q->tail) {
-		q->tail->next = queue; // 队列尾的下一个队列=队列
-		q->tail = queue; // 队列尾=队列
+		// 在全局队列中找到尾部的服务，并把服务的消息队列的next指向queue
+		q->tail->next = queue;
+
+		// 把消息插入服务的消息队列尾部
+		q->tail = queue;
 	} else {
 		// 全局队列为空时，压入第一个服务队列
 		q->head = q->tail = queue; // 头尾都为这个队列
@@ -84,7 +90,7 @@ uboss_globalmq_pop() {
 		q->head = mq->next; // 全局队列的头 = 下一个消息队列
 		// 如果全局队列的头等于空
 		if(q->head == NULL) {
-			assert(mq == q->tail); // 断言
+			assert(mq == q->tail); // 断言，即全局队列的头部和尾部相同
 			q->tail = NULL; // 设置消息队列尾也等于空
 		}
 		mq->next = NULL; // 设置取出的消息队列的下一个消息队列为空
