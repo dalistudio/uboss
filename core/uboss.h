@@ -15,6 +15,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define UBOSS_VERSION_MAJOR	"1"
+#define UBOSS_VERSION_MINOR	"0"
+#define UBOSS_VERSION_NUM	100
+#define UBOSS_VERSION_RELEASE	"0"
+
+#define UBOSS_VERSION	"uBoss " UBOSS_VERSION_MAJOR "." UBOSS_VERSION_MINOR
+#define UBOSS_RELEASE	UBOSS_VERSION "." UBOSS_VERSION_RELEASE
+#define UBOSS_COPYRIGHT	UBOSS_RELEASE "  Copyright (c) 2014-2017 uboss.org "
+#define UBOSS_AUTHORS	"cloudwu, wangdali"
+
 #define PTYPE_TEXT 0 // 文本类型
 #define PTYPE_RESPONSE 1 // 响应类型
 #define PTYPE_MULTICAST 2 // 组播类型

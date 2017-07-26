@@ -126,6 +126,7 @@ logo() {
 	fprintf(stdout, "        ##  ####          ##    ##    ##    ##          ##          ## \n");
 	fprintf(stdout, "        ####  ##  ##    ########        ####      ########    ######## \n");
 	fprintf(stdout, "        ##    ####                                                     \n");
+	fprintf(stdout, "        ##                  %s       \n",UBOSS_RELEASE);
 	fprintf(stdout, "        ##                  A Lightweight MicroService Framework       \n");
 	fprintf(stdout, "\n\n");
 	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");

@@ -1,6 +1,8 @@
 #ifndef poll_socket_kqueue_h
 #define poll_socket_kqueue_h
 
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__NetBSD__)
+
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -90,5 +92,7 @@ sp_nonblocking(int fd) {
 
 	fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 }
+
+#endif
 
 #endif

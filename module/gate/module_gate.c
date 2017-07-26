@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** Copyright (c) 2014-2017 uboss.org All rights Reserved.
 ** uBoss - A Lightweight MicroService Framework
 **
 ** uBoss Gate Module
