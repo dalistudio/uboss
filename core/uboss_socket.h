@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Socket
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #ifndef uboss_socket_h
 #define uboss_socket_h
 
@@ -24,7 +34,7 @@ void uboss_socket_free();
 int uboss_socket_poll();
 
 int uboss_socket_send(struct uboss_context *ctx, int id, void *buffer, int sz);
-void uboss_socket_send_lowpriority(struct uboss_context *ctx, int id, void *buffer, int sz);
+int uboss_socket_send_lowpriority(struct uboss_context *ctx, int id, void *buffer, int sz);
 int uboss_socket_listen(struct uboss_context *ctx, const char *host, int port, int backlog);
 int uboss_socket_connect(struct uboss_context *ctx, const char *host, int port);
 int uboss_socket_bind(struct uboss_context *ctx, int fd);

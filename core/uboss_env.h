@@ -1,4 +1,14 @@
 /*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Lua Env
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
+/*
  * Lua 全局环境
  *
  * 用一个 luaVM 管理所有全局变量

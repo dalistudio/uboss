@@ -1,0 +1,42 @@
+
+打开日志文件
+FILE * uboss_log_open(struct uboss_context * ctx, uint32_t handle);
+
+参数：
+	ctx - uboss上下文
+	handle - 句柄的值
+
+返回值：
+	FILE * - 返回打开的文件句柄
+	
+
+
+关闭日志文件
+void uboss_log_close(struct uboss_context * ctx, FILE *f, uint32_t handle);
+
+参数：
+	ctx    - uboss上下文
+	f      - 日志文件的句柄
+	handle - 句柄的值
+
+返回值：
+	void
+
+
+
+
+写入日志文件
+void uboss_log_output(FILE *f, uint32_t source, int type, int session, void * buffer, size_t sz);
+
+参数：
+	f       - 日志文件的句柄
+	source  - 来源地址
+	type    - 消息类型
+	session - 会话编号
+	buffer  - 数据缓冲地址
+	sz      - 数据的长度
+
+
+
+
+

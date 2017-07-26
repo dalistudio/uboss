@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2014-2016 uboss.org All rights Reserved.
-** uBoss - A lightweight micro service framework
+** uBoss - A Lightweight MicroService Framework
 **
 ** uBoss Main Function
 **
@@ -112,18 +112,43 @@ static const char * load_config = "\
 	return result\
 ";
 
+// uBoss 标志
+void
+logo() {
+	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");
+	fprintf(stdout, "\n\n");
+	fprintf(stdout, "                        ########              Powered by uboss.org     \n");
+	fprintf(stdout, "                          ##    ##                %s                   \n",__DATE__);
+	fprintf(stdout, "        ##    ##          ##    ##                                     \n");
+	fprintf(stdout, "        ##    ##          ######        ####      ########    ######## \n");
+	fprintf(stdout, "        ##    ##          ##    ##    ##    ##    ##          ##       \n");
+	fprintf(stdout, "        ##    ##          ##    ##    ##    ##      ####        ####   \n");
+	fprintf(stdout, "        ##  ####          ##    ##    ##    ##          ##          ## \n");
+	fprintf(stdout, "        ####  ##  ##    ########        ####      ########    ######## \n");
+	fprintf(stdout, "        ##    ####                                                     \n");
+	fprintf(stdout, "        ##                  A Lightweight MicroService Framework       \n");
+	fprintf(stdout, "\n\n");
+	fprintf(stdout, "=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>=====>>>>>\n");
+}
+
 // 主函数
 int
 main(int argc, char *argv[]) {
+	// 输出 logo
+	logo();
+
 	const char * config_file = NULL ;
 
 	// 执行必须有一个参数，否则打印错误信息。
 	if (argc > 1) {
 		config_file = argv[1];
 	} else {
-		fprintf(stderr, "usage: uboss configfilename\n");
-		return 1;
+//		fprintf(stderr, "usage: uboss configfilename\n");
+//		return 1;
+		config_file = "conf/uboss.conf";
 	}
+
+	fprintf(stdout, "Config File = %s\n", config_file);
 
 	luaS_initshr(); // 初始化 Lua 全局共享表
 	uboss_globalinit(); // 全局初始化
@@ -153,11 +178,11 @@ main(int argc, char *argv[]) {
 	config.thread =  optint("thread",8); // 启动工作线程数
 	config.module_path = optstring("module","./module/?.so"); // C写的模块路径
 	config.harbor = optint("harbor", 1); // 集群的编号
-	config.bootstrap = optstring("bootstrap","lua bootstrap"); // 启动脚本
+	config.bootstrap = optstring("bootstrap","luavm bootstrap"); // 启动脚本
 	config.daemon = optstring("daemon", NULL); // 守护进程 pid 路径
 
 	config.logservice = optstring("logservice", "logger"); // 日志记录器的服务
-	config.logger = optstring("logger", "log/uboss.log"); // 日志记录器
+	config.logger = optstring("logger", NULL); // 日志记录器
 	config.logpath = optstring("logpath", "./log/"); // 保存日志的路径
 	
 

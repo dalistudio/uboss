@@ -1,3 +1,12 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Main Function
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in this file end.
+*/
 #ifndef UBOSS_H
 #define UBOSS_H
 
@@ -13,9 +22,7 @@
 #define PTYPE_SYSTEM 4 // 系统类型
 #define PTYPE_HARBOR 5 // 集群类型
 #define PTYPE_SOCKET 6 // 网络类型
-// read lualib/uboss.lua examples/simplemonitor.lua
 #define PTYPE_ERROR 7 // 错误类型
-// read lualib/uboss.lua lualib/mqueue.lua lualib/snax.lua
 #define PTYPE_RESERVED_QUEUE 8 // 队列保留类型
 #define PTYPE_RESERVED_DEBUG 9 // 调试保留类型
 #define PTYPE_RESERVED_LUA 10 // Lua保留类型
@@ -42,3 +49,27 @@ uint64_t uboss_now(void);
 void uboss_debug_memory(const char *info);	// for debug use, output current service memory to stderr
 
 #endif
+
+/*
+The MIT License (MIT)
+
+Copyright (c) 2014-2016 uboss.org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+ */

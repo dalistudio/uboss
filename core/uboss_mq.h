@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Message Queue
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #ifndef UBOSS_MESSAGE_QUEUE_H
 #define UBOSS_MESSAGE_QUEUE_H
 
@@ -9,10 +19,10 @@ struct uboss_message {
 	uint32_t source; // 来源
 	int session; // 会话
 	void * data; // 数据的地址
-	size_t sz; // 数据的长度
+	size_t sz; // 数据的长度(前8bit表示数据的类型)
 };
 
-// type is encoding in uboss_message.sz high 8bit
+// 数据类型：uboss_message.sz 高 8bit
 #define MESSAGE_TYPE_MASK (SIZE_MAX >> 8)
 #define MESSAGE_TYPE_SHIFT ((sizeof(size_t)-1) * 8)
 
@@ -27,7 +37,7 @@ void uboss_mq_mark_release(struct message_queue *q);
 typedef void (*message_drop)(struct uboss_message *, void *);
 
 void uboss_mq_release(struct message_queue *q, message_drop drop_func, void *ud);
-uint32_t uboss_mq_handle(struct message_queue *);
+uint32_t uboss_mq_handle(struct message_queue *q);
 
 // 0 for success
 int uboss_mq_pop(struct message_queue *q, struct uboss_message *message);

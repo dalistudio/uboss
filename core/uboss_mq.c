@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Message Queue
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #include "uboss.h"
 #include "uboss_mq.h"
 #include "uboss_handle.h"
@@ -10,10 +20,10 @@
 #include <stdbool.h>
 
 #define DEFAULT_QUEUE_SIZE 64 // 默认队列大小
-#define MAX_GLOBAL_MQ 0x10000 // 全局消息队列最大值
+//#define MAX_GLOBAL_MQ 0x10000 // 全局消息队列最大值
 
-// 0 表示消息队列不在全局队列中 means mq is not in global mq.
-// 1 表示消息队列在全局队列中，或者消息在调度中 means mq is in global mq , or the message is dispatching.
+// 0 表示消息队列不在全局队列中
+// 1 表示消息队列在全局队列中，或者消息在调度中
 
 #define MQ_IN_GLOBAL 1
 #define MQ_OVERLOAD 1024
@@ -48,13 +58,20 @@ uboss_globalmq_push(struct message_queue * queue) {
 	struct global_queue *q= Q; // 获取 全局消息队列
 
 	SPIN_LOCK(q) // 锁住
-	assert(queue->next == NULL); // 断言
 
-	// 如果链表尾存在数据
+	// 断言，服务消息的next必须为NULL，否在结束。
+	// 因为不能把一个已存在消息队列的消息存入，否在会有意想不到的错误。
+	assert(queue->next == NULL); 
+
+	// 如果链表尾存在数据，表示全局队列不为空
 	if(q->tail) {
-		q->tail->next = queue; // 队列尾的下一个队列=队列
-		q->tail = queue; // 队列尾=队列
+		// 在全局队列中找到尾部的服务，并把服务的消息队列的next指向queue
+		q->tail->next = queue;
+
+		// 把消息插入服务的消息队列尾部
+		q->tail = queue;
 	} else {
+		// 全局队列为空时，压入第一个服务队列
 		q->head = q->tail = queue; // 头尾都为这个队列
 	}
 	SPIN_UNLOCK(q) // 解锁
@@ -73,7 +90,7 @@ uboss_globalmq_pop() {
 		q->head = mq->next; // 全局队列的头 = 下一个消息队列
 		// 如果全局队列的头等于空
 		if(q->head == NULL) {
-			assert(mq == q->tail); // 断言
+			assert(mq == q->tail); // 断言，即全局队列的头部和尾部相同
 			q->tail = NULL; // 设置消息队列尾也等于空
 		}
 		mq->next = NULL; // 设置取出的消息队列的下一个消息队列为空
@@ -95,10 +112,10 @@ uboss_mq_create(uint32_t handle) {
 	// When the queue is create (always between service create and service init) ,
 	// set in_global flag to avoid push it to global queue .
 	// If the service init success, uboss_context_new will call uboss_mq_push to push it to global queue.
-	q->in_global = MQ_IN_GLOBAL; // 是否在全局队列中 =1
-	q->release = 0; // 是否可释放
-	q->overload = 0; // 是否过载
-	q->overload_threshold = MQ_OVERLOAD; // 过载的阀值 =1024
+	q->in_global = MQ_IN_GLOBAL; // 是否在全局队列中：0=否 1=是 （默认为1）
+	q->release = 0; // 是否可释放：0=否 1=是
+	q->overload = 0; // 是否过载：0=否 1=是
+	q->overload_threshold = MQ_OVERLOAD; // 过载的阀值 （默认为1024）
 	q->queue = uboss_malloc(sizeof(struct uboss_message) * q->cap); // 分配队列的内存空间
 	q->next = NULL; // 下一个队列的指针
 
@@ -157,12 +174,13 @@ uboss_mq_pop(struct message_queue *q, struct uboss_message *message) {
 
 	// 如果队列头不等于队列尾
 	if (q->head != q->tail) {
-		*message = q->queue[q->head++]; // 从消息队列中取出消息
+		*message = q->queue[q->head++]; // 从消息队列头取出消息后 +1
 		ret = 0;
 		int head = q->head; // 获得队列头
 		int tail = q->tail; // 获得队列尾
 		int cap = q->cap; // 获得队列长度
 
+		// 队列头 大于等于 队列数量，表示达到容器尾，应容器头开始
 		if (head >= cap) {
 			q->head = head = 0; // 队列头 =0
 		}
@@ -170,13 +188,16 @@ uboss_mq_pop(struct message_queue *q, struct uboss_message *message) {
 		if (length < 0) {
 			length += cap;
 		}
+
+		// 如果队列长度 大于 过载阀值，阀值放大2倍
 		while (length > q->overload_threshold) {
-			q->overload = length;
-			q->overload_threshold *= 2;
+			q->overload = length; // 过载值 = 队列长度
+			q->overload_threshold *= 2; // 过载阀值放大2倍
 		}
 	} else {
-		// reset overload_threshold when queue is empty
-		q->overload_threshold = MQ_OVERLOAD;
+		// 服务消息队列为空时，重置 过载阀值 为默认值
+		// 当消息队列为空时，是否也应该重置一下 消息队列 为默认值
+		q->overload_threshold = MQ_OVERLOAD; // 否则过载阀值为默认 1024
 	}
 
 	if (ret) {
@@ -213,10 +234,13 @@ uboss_mq_push(struct message_queue *q, struct uboss_message *message) {
 	SPIN_LOCK(q) // 锁住
 
 	q->queue[q->tail] = *message; // 消息赋给队列尾
+
+	// 如果队列尾+1 大于等于 队列数量时，队列尾 =0
 	if (++ q->tail >= q->cap) {
-		q->tail = 0;
+		q->tail = 0; // 循环到队列头
 	}
 
+	// 如果队列头 等于 队列尾，则表示队列已满，需要展开2倍
 	if (q->head == q->tail) {
 		expand_queue(q); // 展开（成倍放大）队列
 	}

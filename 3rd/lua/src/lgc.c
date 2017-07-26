@@ -1,5 +1,5 @@
 /*
-** $Id: lgc.c,v 2.210 2015/11/03 18:10:44 roberto Exp $
+** $Id: lgc.c,v 2.215 2016/12/22 13:08:50 roberto Exp $
 ** Garbage Collector
 ** See Copyright Notice in lua.h
 */
@@ -193,7 +193,8 @@ void luaC_upvalbarrier_ (lua_State *L, UpVal *uv) {
 
 void luaC_fix (lua_State *L, GCObject *o) {
   global_State *g = G(L);
-  lua_assert(g->allgc == o);  /* object must be 1st in 'allgc' list! */
+  if (g->allgc != o)
+	  return;  /* if object is not 1st in 'allgc' list, it is in global short string table */
   white2gray(o);  /* they will be gray forever */
   g->allgc = o->next;  /* remove object from 'allgc' list */
   o->next = g->fixedgc;  /* link it to 'fixedgc' list */
@@ -467,9 +468,23 @@ static lu_mem traversetable (global_State *g, Table *h) {
   else  /* not weak */
     traversestrongtable(g, h);
   return sizeof(Table) + sizeof(TValue) * h->sizearray +
-                         sizeof(Node) * cast(size_t, sizenode(h));
+                         sizeof(Node) * cast(size_t, allocsizenode(h));
 }
 
+static int marksharedproto (global_State *g, SharedProto *f) {
+  int i;
+  if (g != f->l_G)
+    return 0;
+  markobjectN(g, f->source);
+  for (i = 0; i < f->sizeupvalues; i++)  /* mark upvalue names */
+    markobjectN(g, f->upvalues[i].name);
+  for (i = 0; i < f->sizelocvars; i++)  /* mark local-variable names */
+    markobjectN(g, f->locvars[i].varname);
+  return sizeof(Instruction) * f->sizecode +
+         sizeof(int) * f->sizelineinfo +
+         sizeof(LocVar) * f->sizelocvars +
+         sizeof(Upvaldesc) * f->sizeupvalues;
+}
 
 /*
 ** Traverse a prototype. (While a prototype is being build, its
@@ -477,24 +492,20 @@ static lu_mem traversetable (global_State *g, Table *h) {
 ** NULL, so the use of 'markobjectN')
 */
 static int traverseproto (global_State *g, Proto *f) {
-  int i;
+  int i,nk,np;
   if (f->cache && iswhite(f->cache))
     f->cache = NULL;  /* allow cache to be collected */
-  markobjectN(g, f->source);
-  for (i = 0; i < f->sizek; i++)  /* mark literals */
+  if (f->sp == NULL)
+    return sizeof(Proto);
+  nk = (f->k == NULL) ? 0 : f->sp->sizek;
+  np = (f->p == NULL) ? 0 : f->sp->sizep;
+  for (i = 0; i < nk; i++)  /* mark literals */
     markvalue(g, &f->k[i]);
-  for (i = 0; i < f->sizeupvalues; i++)  /* mark upvalue names */
-    markobjectN(g, f->upvalues[i].name);
-  for (i = 0; i < f->sizep; i++)  /* mark nested protos */
+  for (i = 0; i < np; i++)  /* mark nested protos */
     markobjectN(g, f->p[i]);
-  for (i = 0; i < f->sizelocvars; i++)  /* mark local-variable names */
-    markobjectN(g, f->locvars[i].varname);
-  return sizeof(Proto) + sizeof(Instruction) * f->sizecode +
-                         sizeof(Proto *) * f->sizep +
-                         sizeof(TValue) * f->sizek +
-                         sizeof(int) * f->sizelineinfo +
-                         sizeof(LocVar) * f->sizelocvars +
-                         sizeof(Upvaldesc) * f->sizeupvalues;
+  return sizeof(Proto) + sizeof(Proto *) * np +
+                         sizeof(TValue) * nk +
+                         marksharedproto(g, f->sp);
 }
 
 
@@ -539,7 +550,7 @@ static lu_mem traversethread (global_State *g, lua_State *th) {
     StkId lim = th->stack + th->stacksize;  /* real end of stack */
     for (; o < lim; o++)  /* clear not-marked stack slice */
       setnilvalue(o);
-    /* 'remarkupvals' may have removed thread from 'twups' list */ 
+    /* 'remarkupvals' may have removed thread from 'twups' list */
     if (!isintwups(th) && th->openupval != NULL) {
       th->twups = g->twups;  /* link it back to the list */
       g->twups = th;
@@ -754,14 +765,11 @@ static GCObject **sweeplist (lua_State *L, GCObject **p, lu_mem count) {
 /*
 ** sweep a list until a live object (or end of list)
 */
-static GCObject **sweeptolive (lua_State *L, GCObject **p, int *n) {
+static GCObject **sweeptolive (lua_State *L, GCObject **p) {
   GCObject **old = p;
-  int i = 0;
   do {
-    i++;
     p = sweeplist(L, p, 1);
   } while (p == old);
-  if (n) *n += i;
   return p;
 }
 
@@ -821,7 +829,9 @@ static void GCTM (lua_State *L, int propagateerrors) {
     setobj2s(L, L->top, tm);  /* push finalizer... */
     setobj2s(L, L->top + 1, &v);  /* ... and its argument */
     L->top += 2;  /* and (next line) call the finalizer */
+    L->ci->callstatus |= CIST_FIN;  /* will run a finalizer */
     status = luaD_pcall(L, dothecall, NULL, savestack(L, L->top - 2), 0);
+    L->ci->callstatus &= ~CIST_FIN;  /* not running a finalizer anymore */
     L->allowhook = oldah;  /* restore hooks */
     g->gcrunning = running;  /* restore state */
     if (status != LUA_OK && propagateerrors) {  /* error while running __gc? */
@@ -856,10 +866,10 @@ static int runafewfinalizers (lua_State *L) {
 /*
 ** call all pending finalizers
 */
-static void callallpendingfinalizers (lua_State *L, int propagateerrors) {
+static void callallpendingfinalizers (lua_State *L) {
   global_State *g = G(L);
   while (g->tobefnz)
-    GCTM(L, propagateerrors);
+    GCTM(L, 0);
 }
 
 
@@ -909,7 +919,7 @@ void luaC_checkfinalizer (lua_State *L, GCObject *o, Table *mt) {
     if (issweepphase(g)) {
       makewhite(g, o);  /* "sweep" object 'o' */
       if (g->sweepgc == &o->next)  /* should not remove 'sweepgc' object */
-        g->sweepgc = sweeptolive(L, g->sweepgc, NULL);  /* change 'sweepgc' */
+        g->sweepgc = sweeptolive(L, g->sweepgc);  /* change 'sweepgc' */
     }
     /* search for pointer pointing to 'o' */
     for (p = &g->allgc; *p != o; p = &(*p)->next) { /* empty */ }
@@ -951,19 +961,16 @@ static void setpause (global_State *g) {
 
 /*
 ** Enter first sweep phase.
-** The call to 'sweeptolive' makes pointer point to an object inside
-** the list (instead of to the header), so that the real sweep do not
-** need to skip objects created between "now" and the start of the real
-** sweep.
-** Returns how many objects it swept.
+** The call to 'sweeplist' tries to make pointer point to an object
+** inside the list (instead of to the header), so that the real sweep do
+** not need to skip objects created between "now" and the start of the
+** real sweep.
 */
-static int entersweep (lua_State *L) {
+static void entersweep (lua_State *L) {
   global_State *g = G(L);
-  int n = 0;
   g->gcstate = GCSswpallgc;
   lua_assert(g->sweepgc == NULL);
-  g->sweepgc = sweeptolive(L, &g->allgc, &n);
-  return n;
+  g->sweepgc = sweeplist(L, &g->allgc, 1);
 }
 
 
@@ -971,7 +978,7 @@ void luaC_freeallobjects (lua_State *L) {
   global_State *g = G(L);
   separatetobefnz(g, 1);  /* separate all objects with finalizers */
   lua_assert(g->finobj == NULL);
-  callallpendingfinalizers(L, 0);
+  callallpendingfinalizers(L);
   lua_assert(g->tobefnz == NULL);
   g->currentwhite = WHITEBITS; /* this "white" makes all objects look dead */
   g->gckind = KGC_NORMAL;
@@ -1064,12 +1071,11 @@ static lu_mem singlestep (lua_State *L) {
     }
     case GCSatomic: {
       lu_mem work;
-      int sw;
       propagateall(g);  /* make sure gray list is empty */
       work = atomic(L);  /* work is what was traversed by 'atomic' */
-      sw = entersweep(L);
+      entersweep(L);
       g->GCestimate = gettotalbytes(g);  /* first estimate */;
-      return work + sw * GCSWEEPCOST;
+      return work;
     }
     case GCSswpallgc: {  /* sweep "regular" objects */
       return sweepstep(L, g, GCSswpfinobj, &g->finobj);

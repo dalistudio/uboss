@@ -1,99 +1,178 @@
-# Makefile for installing uBoss
-# See doc/readme.html for installation and customization instructions.
-
-# == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
-
-# Your platform. See PLATS for possible values.
-PLAT= none
-
-# Where to install. The installation starts in the src and doc directories,
-# so take care if INSTALL_TOP is not an absolute path. See the local target.
-INSTALL_TOP= /opt/uboss
-INSTALL_BIN= $(INSTALL_TOP)/bin
-INSTALL_LIB= $(INSTALL_TOP)/lib
-
-# How to install. If your install program does not support "-p", then
-# you may have to run ranlib on the installed liblua.a.
-INSTALL= install -p
-INSTALL_EXEC= $(INSTALL) -m 0755
-INSTALL_DATA= $(INSTALL) -m 0644
+####################
 #
-# If you don't have "install" you can use "cp" instead.
-# INSTALL= cp -p
-# INSTALL_EXEC= $(INSTALL)
-# INSTALL_DATA= $(INSTALL)
+# uBoss 编译脚本
+#
+####################
 
-# Other utilities.
-MKDIR= mkdir -p
-RM= rm -f
 
-# == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
+# 包含平台参数文件
+include platform.mk
 
-# Convenience platforms targets.
-PLATS= linux macosx mingw freebsd
+# uBoss 生成路径
+UBOSS_BUILD_PATH ?= .
 
-# What to install.
-TO_BIN= uboss
-TO_LIB= libuboss.a libuboss.so
+# uBoss 模块的路径
+MODULE_PATH ?= module
 
-# uBoss version and release.
-V= 1.0
-R= $V.0
+# Lua 库的路径
+LUA_LIB_PATH ?= lib
 
-# Targets start here.
-all:	$(PLAT)
+# 定义标志
+CFLAGS = -g -O2 -Wall
+# CFLAGS += -DUSE_PTHREAD_LOCK
 
-$(PLATS) clean:
-	cd core && $(MAKE) $@
 
-install:
-	cd core && $(MKDIR) $(INSTALL_BIN) $(INSTALL_LIB)
-	cd core && $(INSTALL_EXEC) $(TO_BIN) $(INSTALL_BIN)
-	cd core && $(INSTALL_DATA) $(TO_LIB) $(INSTALL_LIB)
+###
+# 编译 lua
+###
 
-uninstall:
-	cd core && cd $(INSTALL_BIN) && $(RM) $(TO_BIN)
-	cd core && cd $(INSTALL_LIB) && $(RM) $(TO_LIB)
+# lua静态库的路径
+LUA_STATICLIB := 3rd/lua/src/liblua.a
+LUA_LIB ?= $(LUA_STATICLIB)
+LUA_INC ?= 3rd/lua/src
 
-local:
-	$(MAKE) install INSTALL_TOP=../install
+$(LUA_STATICLIB) :
+	cd 3rd/lua && $(MAKE) CC='$(CC) -std=gnu99' $(PLAT)
 
-none:
-	@echo "Please do 'make PLATFORM' where PLATFORM is one of these:"
-	@echo "   $(PLATS)"
-	@echo "See doc/readme.html for complete instructions."
+###
+# 编译 jemalloc 
+###
 
-# make may get confused with test/ and install/
-dummy:
+JEMALLOC_STATICLIB := 3rd/jemalloc/lib/libjemalloc_pic.a
+JEMALLOC_INC := 3rd/jemalloc/include/jemalloc
 
-# echo config parameters
-echo:
-	@cd core && $(MAKE) -s echo
-	@echo "PLAT= $(PLAT)"
-	@echo "V= $V"
-	@echo "R= $R"
-	@echo "TO_BIN= $(TO_BIN)"
-	@echo "TO_INC= $(TO_INC)"
-	@echo "TO_LIB= $(TO_LIB)"
-	@echo "TO_MAN= $(TO_MAN)"
-	@echo "INSTALL_TOP= $(INSTALL_TOP)"
-	@echo "INSTALL_BIN= $(INSTALL_BIN)"
-	@echo "INSTALL_INC= $(INSTALL_INC)"
-	@echo "INSTALL_LIB= $(INSTALL_LIB)"
-	@echo "INSTALL_MAN= $(INSTALL_MAN)"
-	@echo "INSTALL_LMOD= $(INSTALL_LMOD)"
-	@echo "INSTALL_CMOD= $(INSTALL_CMOD)"
-	@echo "INSTALL_EXEC= $(INSTALL_EXEC)"
-	@echo "INSTALL_DATA= $(INSTALL_DATA)"
+all : jemalloc
+	
+.PHONY : jemalloc update3rd
 
-# echo pkg-config data
-pc:
-	@echo "version=$R"
-	@echo "prefix=$(INSTALL_TOP)"
-	@echo "libdir=$(INSTALL_LIB)"
-	@echo "includedir=$(INSTALL_INC)"
+MALLOC_STATICLIB := $(JEMALLOC_STATICLIB)
 
-# list targets that do not create files (but not all makes understand .PHONY)
-.PHONY: all $(PLATS) clean install local none echo pecho lecho
+$(JEMALLOC_STATICLIB) : 3rd/jemalloc/Makefile
+	cd 3rd/jemalloc && $(MAKE) CC=$(CC) 
 
-# (end of Makefile)
+3rd/jemalloc/autogen.sh :
+	git submodule update --init
+
+3rd/jemalloc/Makefile : | 3rd/jemalloc/autogen.sh
+	cd 3rd/jemalloc && ./autogen.sh --with-jemalloc-prefix=je_ --disable-valgrind
+
+jemalloc : $(MALLOC_STATICLIB)
+
+update3rd :
+	rm -rf 3rd/jemalloc && git submodule update --init
+
+###
+# uboss
+###
+
+# uBoss 的模块
+MODULE = luavm logger harbor monitor gate
+
+# Lua 的库
+LUA_CLIB = uboss socketdriver profile netpack stm bson crypt clientsocket \
+  memory multicast mongo mysqlaux sharedata debugchannel sproto cluster \
+  md5 lpeg
+
+# uBoss 核心
+UBOSS_CORE = uboss.c uboss_handle.c uboss_module.c uboss_mq.c \
+  uboss_server.c uboss_start.c uboss_timer.c uboss_error.c \
+  uboss_harbor.c uboss_env.c uboss_monitor.c uboss_socket.c socket_server.c \
+  uboss_malloc.c uboss_daemon.c uboss_log.c uboss_command.c uboss_license.c
+
+all : \
+  $(UBOSS_BUILD_PATH)/uboss \
+  $(foreach v, $(MODULE), $(MODULE_PATH)/$(v).so) \
+  $(foreach v, $(LUA_CLIB), $(LUA_LIB_PATH)/$(v).so) 
+
+$(UBOSS_BUILD_PATH)/uboss : $(foreach v, $(UBOSS_CORE), core/$(v)) $(LUA_LIB) $(MALLOC_STATICLIB)
+	$(CC) $(CFLAGS) -o $@ $^ -Icore -I$(LUA_INC) -I$(JEMALLOC_INC) $(EXPORT) $(UBOSS_LIBS) $(UBOSS_DEFINES)
+
+$(LUA_LIB_PATH) :
+	mkdir $(LUA_LIB_PATH)
+
+$(MODULE_PATH) :
+	mkdir $(MODULE_PATH)
+
+###
+# 编译 uBoss 模块
+###
+define MODULE_TEMP
+  $$(MODULE_PATH)/$(1).so : module/$(1)/module_$(1).c | $$(MODULE_PATH)
+	$$(CC) $$(CFLAGS) $$(SHARED) $$< -o $$@ -Icore -I$$(LUA_INC)
+endef
+
+$(foreach v, $(MODULE), $(eval $(call MODULE_TEMP,$(v))))
+
+###
+# 编译 lua 库
+###
+$(LUA_LIB_PATH)/uboss.so : lib/uboss/lua-uboss.c lib/uboss/lua-seri.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/socketdriver.so : lib/socket/lua-socket.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/profile.so : lib/profile/lua-profile.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@  -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/netpack.so : lib/netpack/lua-netpack.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/stm.so : lib/stm/lua-stm.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/bson.so : lib/bson/lua-bson.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/crypt.so : lib/crypt/lua-crypt.c lib/crypt/lsha1.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/cluster.so : lib/cluster/lua-cluster.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -Imodule -Ilib -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/clientsocket.so : lib/clientsocket/lua-clientsocket.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/memory.so : lib/memory/lua-memory.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/multicast.so : lib/multicast/lua-multicast.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/mongo.so : lib/mongo/lua-mongo.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/mysqlaux.so : lib/mysqlaux/lua-mysqlaux.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/sharedata.so : lib/sharedata/lua-sharedata.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/debugchannel.so : lib/debugchannel/lua-debugchannel.c | $(LUA_LIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Icore -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/sproto.so : lib/sproto/sproto.c lib/sproto/lsproto.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/sproto -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/md5.so : lib/md5/md5.c lib/md5/md5lib.c lib/md5/compat-5.2.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/md5 -I$(LUA_INC)
+
+$(LUA_LIB_PATH)/lpeg.so : lib/lpeg/lpcap.c lib/lpeg/lpcode.c lib/lpeg/lpprint.c lib/lpeg/lptree.c lib/lpeg/lpvm.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -Ilib/lpeg -I$(LUA_INC)
+
+###
+# 清理项目
+###
+clean :
+	rm -f $(UBOSS_BUILD_PATH)/uboss $(MODULE_PATH)/*.so $(LUA_LIB_PATH)/*.so $(UBOSS_BUILD_PATH)/core/*.o
+
+###
+# 清理所有项目，包括 Lua 和 Jemalloc 项目
+###
+cleanall: clean
+ifneq (,$(wildcard 3rd/jemalloc/Makefile))
+	cd 3rd/jemalloc && $(MAKE) clean
+endif
+	cd 3rd/lua && $(MAKE) clean
+	rm -f $(LUA_STATICLIB)
+

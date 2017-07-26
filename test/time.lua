@@ -1,0 +1,22 @@
+local uboss = require "uboss"
+uboss.start(function()
+    print(uboss.starttime())
+    print(uboss.now())
+
+    uboss.timeout(1, function()
+        print("in 1", uboss.now())
+    end)
+    uboss.timeout(2, function()
+        print("in 2", uboss.now())
+    end)
+    uboss.timeout(3, function()
+        print("in 3", uboss.now())
+    end)
+
+    uboss.timeout(4, function()
+        print("in 4", uboss.now())
+    end)
+    uboss.timeout(100, function()
+        print("in 100", uboss.now())
+    end)
+end)

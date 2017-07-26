@@ -33,3 +33,4 @@ uboss
 
 # Debug files
 *.dSYM/
+.settings/

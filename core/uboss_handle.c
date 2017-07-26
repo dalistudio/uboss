@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Handle
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #include "uboss.h"
 
 #include "uboss_lock.h"
@@ -41,6 +51,8 @@ uboss_handle_register(struct uboss_context *ctx) {
 
 	rwlock_wlock(&s->lock); // 写锁
 	
+	// 因为在死循环中，当找不到空的槽分配句柄时，在放大两倍槽空间时。
+	// 会从新进入句柄匹配槽的过程，直到找到空槽或者槽满到最大值。
 	for (;;) {
 		int i;
 		// 循环所有槽
@@ -49,7 +61,11 @@ uboss_handle_register(struct uboss_context *ctx) {
 			// 限制生成的 句柄值 只能在句柄的掩码范围之内
 			// 最多有 0xFFFFFF（1600W） 个句柄，每个句柄占4字节，即最大需要64MB内存空间
 			uint32_t handle = (i+s->handle_index) & HANDLE_MASK;
-			int hash = handle & (s->slot_size-1); // 句柄值与上句柄槽的值
+
+			// 散列值 = 句柄值与上句柄槽的值，用于快速找到对应的槽，避免越界。
+			// 如果句柄值大于 槽的值，散列值会回滚到前面，这样找到的数组元素就已经被占用。
+			// 从而找不到空的槽，则跳过返回这个句柄，并把槽放大两倍，再分配句柄。
+			int hash = handle & (s->slot_size-1); 
 
 			// 找到一个空的槽，并将 上下文结构 赋给这个槽
 			if (s->slot[hash] == NULL) { // 如果槽为空
@@ -64,7 +80,7 @@ uboss_handle_register(struct uboss_context *ctx) {
 		}
 
 		// 如果循环完所有槽，都找不到空槽，则将槽的总数扩大2倍
-		assert((s->slot_size*2 - 1) <= HANDLE_MASK);
+		assert((s->slot_size*2 - 1) <= HANDLE_MASK); // 断言槽的总数不大于 HANDLE_MASK ，即0xffffff。
 		struct uboss_context ** new_slot = uboss_malloc(s->slot_size * 2 * sizeof(struct uboss_context *)); // 分配槽的两倍内存空间
 		memset(new_slot, 0, s->slot_size * 2 * sizeof(struct uboss_context *)); // 初始化内存空间为空
 
@@ -77,7 +93,11 @@ uboss_handle_register(struct uboss_context *ctx) {
 		uboss_free(s->slot); // 释放旧槽的空间
 		s->slot = new_slot; // 替换成新槽的地址
 		s->slot_size *= 2; // 修改槽的大小为原来的2倍
-	}
+	} // 死循环 for(;;) 
+
+	// 只有意外的情况下才会执行到这里。
+	// 注意：没有返回值，最好返回0，但可能会重复
+	return 0;
 }
 
 // 收回句柄
@@ -259,7 +279,7 @@ _insert_name(struct handle_storage *s, const char * name, uint32_t handle) {
 	return result;
 }
 
-// 关联名字于句柄值
+// 关联名字与句柄值
 const char * 
 uboss_handle_namehandle(uint32_t handle, const char *name) {
 	rwlock_wlock(&H->lock); // 写锁
@@ -290,6 +310,7 @@ uboss_handle_init(int harbor) {
 
 	H = s; // 设置 全局变量 的值
 
+	// 不要释放 H 结构的内存空间
 	// Don't need to free H
 }
 

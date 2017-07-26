@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Socket
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #include "uboss.h"
 
 #include "uboss_socket.h"
@@ -89,7 +99,7 @@ uboss_socket_poll() {
 	case SOCKET_OPEN:
 		forward_message(UBOSS_SOCKET_TYPE_CONNECT, true, &result);
 		break;
-	case SOCKET_ERROR:
+	case SOCKET_ERR:
 		forward_message(UBOSS_SOCKET_TYPE_ERROR, true, &result);
 		break;
 	case SOCKET_ACCEPT:
@@ -97,6 +107,9 @@ uboss_socket_poll() {
 		break;
 	case SOCKET_UDP:
 		forward_message(UBOSS_SOCKET_TYPE_UDP, false, &result);
+		break;
+	case SOCKET_WARNING:
+		forward_message(UBOSS_SOCKET_TYPE_WARNING, false, &result);
 		break;
 	default:
 		uboss_error(NULL, "Unknown socket message type %d.",type);
@@ -108,31 +121,14 @@ uboss_socket_poll() {
 	return 1;
 }
 
-static int
-check_wsz(struct uboss_context *ctx, int id, void *buffer, int64_t wsz) {
-	if (wsz < 0) {
-		return -1;
-	} else if (wsz > 1024 * 1024) {
-		struct uboss_socket_message tmp;
-		tmp.type = UBOSS_SOCKET_TYPE_WARNING;
-		tmp.id = id;
-		tmp.ud = (int)(wsz / 1024);
-		tmp.buffer = NULL;
-		uboss_send(ctx, 0, uboss_context_handle(ctx), PTYPE_SOCKET, 0 , &tmp, sizeof(tmp));
-//		uboss_error(ctx, "%d Mb bytes on socket %d need to send out", (int)(wsz / (1024 * 1024)), id);
-	}
-	return 0;
+int
+uboss_socket_send(struct uboss_context *ctx, int id, void *buffer, int sz) {
+	return socket_server_send(SOCKET_SERVER, id, buffer, sz);
 }
 
 int
-uboss_socket_send(struct uboss_context *ctx, int id, void *buffer, int sz) {
-	int64_t wsz = socket_server_send(SOCKET_SERVER, id, buffer, sz);
-	return check_wsz(ctx, id, buffer, wsz);
-}
-
-void
 uboss_socket_send_lowpriority(struct uboss_context *ctx, int id, void *buffer, int sz) {
-	socket_server_send_lowpriority(SOCKET_SERVER, id, buffer, sz);
+	return socket_server_send_lowpriority(SOCKET_SERVER, id, buffer, sz);
 }
 
 int 
@@ -189,8 +185,7 @@ uboss_socket_udp_connect(struct uboss_context *ctx, int id, const char * addr, i
 
 int 
 uboss_socket_udp_send(struct uboss_context *ctx, int id, const char * address, const void *buffer, int sz) {
-	int64_t wsz = socket_server_udp_send(SOCKET_SERVER, id, (const struct socket_udp_address *)address, buffer, sz);
-	return check_wsz(ctx, id, (void *)buffer, wsz);
+	return socket_server_udp_send(SOCKET_SERVER, id, (const struct socket_udp_address *)address, buffer, sz);
 }
 
 const char *

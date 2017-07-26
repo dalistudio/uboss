@@ -1,3 +1,13 @@
+/*
+** Copyright (c) 2014-2016 uboss.org All rights Reserved.
+** uBoss - A Lightweight MicroService Framework
+**
+** uBoss Daemon
+**
+** Dali Wang<dali@uboss.org>
+** See Copyright Notice in uboss.h
+*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -79,7 +89,7 @@ daemon_init(const char *pidfile) {
 	int pid = check_pid(pidfile); // 检查 PID
 
 	if (pid) {
-		fprintf(stderr, "Skynet is already running, pid = %d.\n", pid);
+		fprintf(stderr, "uBoss is already running, pid = %d.\n", pid);
 		return 1;
 	}
 
